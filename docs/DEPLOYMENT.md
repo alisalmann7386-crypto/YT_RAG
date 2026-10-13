@@ -2,6 +2,16 @@
 
 The same FastAPI service hosts the UI and API. Administrators prepare the transcript index offline; no YouTube downloads or Whisper jobs run inside web requests.
 
+## YouTube blocking and user downloads
+
+**Users never download the playlist to retrieve answers.** Administrators fetch available captions as timestamped text once. Only the optional offline `--whisper` path downloads audio for videos without usable captions; complete video files are not required.
+
+After `index.sqlite3` is prepared and placed on the host, `/api/search` and evidence-only `/api/ask` need no YouTube connection. The hosting regression test explicitly blocks network calls and ingestion-package imports while retrieving a timed lecture fixture. It also verifies that an unavailable LLM falls back to the saved evidence and that an existing index is not downloaded again at startup.
+
+Opening an embedded lecture still streams from YouTube and depends on video availability, embedding permission, and the viewer's connection. A deleted/blocked clip may not play even though its previously indexed text remains searchable. This is separate from retrieval.
+
+An empty host cannot recover a missing index by querying YouTube. Transfer your prepared index using the methods below. The code-only demo has original notes, not full A2Z lecture data.
+
 ## Same Wi-Fi / LAN
 
 ```bash

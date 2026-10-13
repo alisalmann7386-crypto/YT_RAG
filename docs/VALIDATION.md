@@ -2,11 +2,12 @@
 
 Date: 14 October 2026 (India time). Python 3.12.
 
-- **18 automated tests passed**: timestamp/overlap preservation, deterministic IDs, repeated indexing, preservation after corrupt input, refusal queries, note/lecture attribution, lecture filters, server reload after indexing, SRT import, cached ingestion resume and block handling, API validation/authentication/rate limits, provider failure fallback, citation validation, code indices, hybrid ranking, Qdrant query shape, verified index download and checksum rejection.
+- **21 automated tests passed**: timestamp/overlap preservation, deterministic IDs, repeated indexing, preservation after corrupt input, refusal queries, note/lecture attribution, lecture filters, server reload after indexing, SRT import, cached ingestion resume and block handling, API validation/authentication/rate limits, provider failure fallback, citation validation, code indices, hybrid ranking, Qdrant query shape, verified index download and checksum rejection.
 - **8/8 demo retrieval evaluation cases passed**, including unrelated React, income tax, and cricket questions.
 - Python modules compile and frontend JavaScript passes `node --check`.
 - Uvicorn successfully starts on `0.0.0.0:8000`; HTTP endpoints and static assets are smoke-tested.
 - Repository whitespace validation passes.
+- A hosting regression retrieves a timed lecture fixture while external network access and YouTube/Whisper imports are blocked. Both search and answer return its saved timestamp without any external request. Provider downtime falls back to that evidence, and bootstrap reuses an existing local index without a download.
 
 Tested versions: FastAPI 0.143.0, Uvicorn 0.54.0, httpx 0.28.1, python-dotenv 1.2.4, pydantic 2.13.5, pytest 9.1.1. The ingestion packages installed successfully (yt-dlp 2026.8.19, youtube-transcript-api 1.2.4).
 

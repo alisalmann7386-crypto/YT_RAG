@@ -59,6 +59,8 @@ python -m app.cli stats
 
 Ingestion caches timestamped text; indexing creates the query snapshot. Real indexing replaces the demo corpus. The running server notices a rebuilt index on the next request. Rerunning ingestion skips valid cached work. A blocked or partial run records failures and exits nonzero.
 
+**Your users do not download any videos.** Available captions are fetched once as text by the administrator. Only optional offline Whisper preparation downloads audio for missing captions. Deployed retrieval reads the prepared index and is tested with YouTube/network access blocked; playing the linked video still requires YouTube access.
+
 Read **[docs/TRAINING.md](docs/TRAINING.md)** for the complete setup, semantic embeddings, missing captions, Colab, and evaluation.
 
 ## Enable generated explanations
