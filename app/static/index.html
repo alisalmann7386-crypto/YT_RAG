@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Ask DSA questions and find evidence in indexed Striver A2Z lectures.">
+  <title>A2Z Studyroom · Learn with evidence</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%23e95e2f'/%3E%3Ctext x='8' y='28' fill='white' font-size='24' font-family='Arial'%3EA%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+ <div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+   <a class="brand" href="/"><span class="brand-icon">a<span>2</span>z</span><span>A2Z Studyroom<small>YOUR DSA STUDY SPACE</small></span></a>
+   <button id="new-chat" class="new-chat"><span>＋</span> New conversation <kbd>⌘ K</kbd></button>
+   <div class="section-label">YOUR LIBRARY <button id="refresh" title="Refresh indexed library" aria-label="Refresh indexed library">↻</button></div>
+   <div class="library-search"><span aria-hidden="true">⌕</span><input id="library-search" placeholder="Find a topic or lecture" aria-label="Search your library"></div>
+   <div class="library" id="library"><p class="muted">Loading your library…</p></div>
+   <div class="sidebar-bottom">
+    <button id="index-help" class="import-button"><span>⇧</span> Add playlist transcripts <span>↗</span></button>
+    <a href="https://www.youtube.com/playlist?list=PLgUwDviBIf0oF6QL8m22w1hIDC1vJ_BHz" target="_blank" rel="noopener noreferrer" class="playlist-link">Striver’s A2Z playlist <span>↗</span></a>
+    <p>Independent study tool. Lecture content belongs to its creators.</p>
+   </div>
+  </aside>
+  <main>
+   <header class="topbar">
+    <div class="breadcrumb"><button class="mobile-menu" id="menu" aria-label="Toggle topic library" aria-expanded="false">☰</button><span class="book-icon">▤</span><span>Studyroom</span><span class="slash">/</span><strong>Ask & understand</strong></div>
+    <div class="top-actions"><span id="connection" class="connection">Connecting</span><button id="download-chat" aria-label="Download this conversation" title="Download conversation">↓</button><button id="settings" aria-label="Open settings" title="Settings">⚙</button></div>
+   </header>
+   <div class="workspace">
+    <section class="conversation-area">
+     <div id="welcome" class="welcome">
+      <div class="eyebrow"><span></span> A LITTLE CLARITY. A LOT OF PROGRESS.</div>
+      <h1>Your next <em>“aha!”</em><br>starts here.</h1>
+      <p class="welcome-description">Ask a DSA question. Find the idea, the explanation,<br class="desktop-break"> and the exact lecture moment that makes it click.</p>
+      <div class="library-status" id="corpus-banner">Checking indexed material…</div>
+      <div class="prompt-grid">
+       <button class="prompt-card" data-question="What is the difference between memoization and tabulation?"><span class="card-symbol">↗</span><span class="card-label">CONNECT THE DOTS</span><strong>Memoization vs.<br>tabulation</strong><span class="card-arrow">↗</span></button>
+       <button class="prompt-card" data-question="Explain binary search and its invariant with an example."><span class="card-symbol">⌕</span><span class="card-label">BUILD INTUITION</span><strong>Why does binary<br>search work?</strong><span class="card-arrow">↗</span></button>
+       <button class="prompt-card" data-question="Give me a hint for longest substring without repeating characters." data-mode="hint"><span class="card-symbol">✦</span><span class="card-label">THINK IT THROUGH</span><strong>A nudge for<br>sliding window</strong><span class="card-arrow">↗</span></button>
+       <button class="prompt-card" data-question="Explain the DP recurrence for distinct subsequences."><span class="card-symbol">⤳</span><span class="card-label">BREAK IT DOWN</span><strong>Understand distinct<br>subsequences</strong><span class="card-arrow">↗</span></button>
+      </div>
+      <div class="how-it-works"><span>01 <b>Ask a question</b></span><span>02 <b>Read the evidence</b></span><span>03 <b>Jump to the lecture</b></span></div>
+     </div>
+     <div id="messages" class="messages" aria-live="polite"></div>
+     <div class="composer-wrapper">
+      <div class="filter-row"><span id="filter-label">Searching all indexed material</span><button id="clear-filter" hidden>Clear lecture filter ×</button></div>
+      <form id="question-form" class="composer">
+       <label class="sr-only" for="question">Your DSA question</label>
+       <textarea id="question" rows="2" maxlength="1200" placeholder="Ask about an idea, an approach, or a tricky step…" required></textarea>
+       <div class="composer-tools"><div class="selectors"><label><span>Mode</span><select id="mode" aria-label="Study mode"><option value="explain">Explain</option><option value="hint">Hint only</option><option value="compare">Compare</option><option value="complexity">Complexity</option><option value="code">Code</option></select></label><label><span>Language</span><select id="language" aria-label="Answer language"><option>English</option><option>Hinglish</option><option>Hindi</option></select></label><label id="code-label" hidden><span>Code</span><select id="code-language" aria-label="Code language"><option>Python</option><option>C++</option><option>Java</option></select></label></div><button type="submit" id="send" aria-label="Send your question">↑</button></div>
+      </form>
+      <div class="composer-note"><span>▣ Evidence first. Always check the source.</span><span>Enter to send · Shift + Enter for a new line</span></div>
+     </div>
+    </section>
+    <aside class="evidence-panel">
+     <div class="evidence-heading"><span class="section-label">THE SOURCE OF YOUR AHA</span><span id="source-count">0</span></div>
+     <div id="empty-evidence" class="empty-evidence"><div class="evidence-art"><div class="art-sheet"><i></i><i></i><i></i><span>▶</span></div><div class="art-badge">✓</div></div><h2>See where it comes from.</h2><p>Your source excerpts and lecture moments will appear here after you ask a question.</p><div class="small-divider"></div><span>Read it. Watch it. Make it yours.</span></div>
+     <div id="player-wrapper" hidden><iframe id="player" title="Selected lecture segment" allow="encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe><a id="player-link" target="_blank" rel="noopener noreferrer">Open lecture on YouTube ↗</a></div>
+     <div id="evidence-list" class="evidence-list"></div>
+     <div class="evidence-footer"><span class="dot"></span> Sources come from your indexed library.</div>
+    </aside>
+   </div>
+  </main>
+ </div>
+ <dialog id="help-dialog"><div class="dialog-heading"><h2>Prepare your lecture library</h2><button data-close aria-label="Close">×</button></div><p>Import captions once on your laptop, build the index, then serve it to everyone. The web server only reads the prepared index.</p><pre>python -m app.cli ingest --limit 3
+python -m app.cli index
+python -m app.cli serve</pre><p>Start with three lectures to check caption quality. Remove <code>--limit 3</code> to fetch the full playlist. Failed videos are listed in <code>data/ingest_report.json</code>; rerunning resumes cached work.</p><p><strong>The included demo uses original DSA notes.</strong> It has no Striver transcripts or lecture timestamps until you index real videos.</p><a href="https://github.com/alisalmann7386-crypto/YT_RAG/blob/main/docs/TRAINING.md" target="_blank" rel="noopener noreferrer" class="primary-link">Read the indexing guide ↗</a></dialog>
+ <dialog id="settings-dialog"><div class="dialog-heading"><h2>Your studyroom settings</h2><button data-close aria-label="Close">×</button></div><p id="settings-info">Loading server configuration…</p><form id="key-form"><label for="access-key">Server access key <small>Only needed if your server requires one.</small></label><input type="password" id="access-key" autocomplete="off" placeholder="Enter access key"><button type="submit" class="primary-link">Save for this tab</button></form><p class="muted">LLM provider keys are configured on the server, never in this browser. Conversation history stays in this tab until you clear it.</p><button id="forget-key" class="subtle-button">Forget saved access key</button></dialog>
+ <div id="toast" class="toast" role="status" hidden></div>
+</body>
+</html>

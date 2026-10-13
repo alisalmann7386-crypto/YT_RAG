@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "a2z-studyroom"
+version = "0.1.0"
+description = "Deployable timestamp-aware RAG for Striver's A2Z DSA playlist"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115,<1", "uvicorn[standard]>=0.34,<1",
+  "httpx>=0.28,<1", "python-dotenv>=1.0,<2",
+]
+
+[project.optional-dependencies]
+ingest = ["yt-dlp>=2025.10.22", "youtube-transcript-api>=1.2,<2"]
+semantic = ["sentence-transformers>=3.4,<6", "numpy>=1.26,<3"]
+whisper = ["faster-whisper>=1.1,<2"]
+dev = ["pytest>=8,<10"]
+
+[project.scripts]
+a2z = "app.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.setuptools.package-data]
+app = ["static/*", "seed_notes.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

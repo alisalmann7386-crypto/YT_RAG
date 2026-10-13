@@ -1,0 +1,15 @@
+services:
+  app:
+    build:
+      context: .
+      args:
+        ENABLE_SEMANTIC: ${ENABLE_SEMANTIC:-false}
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      DATA_DIR: /app/data
+      PORT: "8000"
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped

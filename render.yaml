@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: a2z-studyroom
+    runtime: python
+    buildCommand: pip install -e .
+    startCommand: python -m app.bootstrap
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.11
+      - key: LLM_PROVIDER
+        value: none
+      - key: RETRIEVAL_BACKEND
+        value: bm25
+      - key: DEMO_MODE
+        value: "true"
+      - key: DATA_DIR
+        value: /tmp/a2z-data
+# This deploys the notes demo. For actual lectures, see docs/DEPLOYMENT.md:
+# set INDEX_DOWNLOAD_URL + INDEX_SHA256 and DEMO_MODE=false, or attach a disk.
+# Add GROQ_API_KEY and LLM_PROVIDER=groq for generated explanations.

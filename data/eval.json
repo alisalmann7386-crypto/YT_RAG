@@ -1,0 +1,10 @@
+[
+  {"question":"memoization vs tabulation kya difference hai?","expect_title":"Memoization"},
+  {"question":"binary search sorted array","expect_title":"Binary search"},
+  {"question":"longest substring without repeating characters","expect_title":"Sliding window"},
+  {"question":"Dijkstra negative edges","expect_title":"Dijkstra"},
+  {"question":"distinct subsequences dp","expect_title":"Distinct subsequences"},
+  {"question":"React hooks useEffect","expect_refusal":true},
+  {"question":"How do I file an income tax return?","expect_refusal":true},
+  {"question":"Who won the cricket world cup?","expect_refusal":true}
+]
