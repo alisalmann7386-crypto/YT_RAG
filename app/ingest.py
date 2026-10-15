@@ -4,11 +4,19 @@ import os
 import re
 import time
 from functools import lru_cache
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 from app.config import PLAYLIST_URL, Settings
 from app.models import Transcript
 from app.store import atomic_json
+
+
+def youtube_options():
+    # Use the OS trust store on managed machines with an installed corporate CA.
+    # TLS verification remains enabled; never use nocheckcertificate.
+    return {"compat_opts":{"no-certifi"}} if os.getenv("YOUTUBE_USE_SYSTEM_CA", "false").lower() == "true" else {}
 
 
 def validate_playlist(url: str) -> str:
@@ -24,19 +32,20 @@ def validate_playlist(url: str) -> str:
 def list_playlist(url: str):
     from yt_dlp import YoutubeDL
     validate_playlist(url)
-    with YoutubeDL({"extract_flat":"in_playlist", "skip_download":True, "quiet":True,
+    with YoutubeDL({**youtube_options(), "extract_flat":"in_playlist", "skip_download":True, "quiet":True,
                     "socket_timeout":20, "retries":2, "extractor_retries":2}) as ydl:
         info = ydl.extract_info(url, download=False)
     if not info:
         raise RuntimeError("Playlist metadata could not be fetched")
     seen, items = set(), []
-    for e in info.get("entries") or []:
+    for position, e in enumerate(info.get("entries") or [], 1):
         if not e or not re.fullmatch(r"[A-Za-z0-9_-]{11}", e.get("id", "")) or e["id"] in seen:
             continue
-        if e.get("title") in {"[Private video]", "[Deleted video]"}:
+        if not e.get("title") or e.get("title") in {"[Private video]", "[Deleted video]"}:
             continue
         seen.add(e["id"])
-        items.append({"video_id":e["id"], "title":e.get("title") or e["id"], "duration":e.get("duration") or 0})
+        items.append({"video_id":e["id"], "title":e.get("title") or e["id"], "duration":e.get("duration") or 0,
+                      "playlist_position":position})
     if not items:
         raise RuntimeError("Playlist has no accessible videos")
     return {"url":url,"title":info.get("title","YouTube playlist"),"videos":items}
@@ -44,8 +53,14 @@ def list_playlist(url: str):
 
 def captions(video: dict) -> Transcript:
     from youtube_transcript_api import YouTubeTranscriptApi
+    from requests import Session
+    class TimedSession(Session):
+        def request(self, *args, **kwargs):
+            kwargs.setdefault("timeout", (10, 30))
+            return super().request(*args, **kwargs)
     languages = [x.strip() for x in os.getenv("CAPTION_LANGUAGES", "en,hi").split(",") if x.strip()]
-    fetched = YouTubeTranscriptApi().fetch(video["video_id"], languages=languages)
+    with TimedSession() as session:
+        fetched = YouTubeTranscriptApi(http_client=session).fetch(video["video_id"], languages=languages)
     segments = [{"start":s.start,"end":s.start + max(s.duration, .01),"text":s.text.strip()}
                 for s in fetched if s.text.strip()]
     return Transcript(**video, language=fetched.language_code, source="captions", segments=segments)
@@ -63,7 +78,7 @@ def whisper(video: dict, settings: Settings) -> Transcript:
     from yt_dlp import YoutubeDL
     audio = settings.data_dir / "audio"
     audio.mkdir(exist_ok=True)
-    with YoutubeDL({"format":"bestaudio/best","outtmpl":str(audio / "%(id)s.%(ext)s"),
+    with YoutubeDL({**youtube_options(), "format":"bestaudio/best","outtmpl":str(audio / "%(id)s.%(ext)s"),
                     "quiet":True,"noplaylist":True,"socket_timeout":20,"retries":2}) as ydl:
         info = ydl.extract_info(f"https://www.youtube.com/watch?v={video['video_id']}",download=True)
         path = Path(ydl.prepare_filename(info))
@@ -84,10 +99,15 @@ def load_cached(path: Path):
 
 
 def ingest_playlist(settings: Settings, url: str = PLAYLIST_URL, limit: int | None = None,
-                    allow_whisper: bool = False, refresh_playlist: bool = False):
+                    allow_whisper: bool = False, refresh_playlist: bool = False,
+                    start_position: int = 1, end_position: int | None = None, workers: int = 1):
     validate_playlist(url)
     if limit is not None and limit < 1:
         raise ValueError("--limit must be positive")
+    if start_position < 1 or end_position is not None and end_position < start_position:
+        raise ValueError("Require 1 <= --start-position <= --end-position")
+    if not 1 <= workers <= 4:
+        raise ValueError("--workers must be between 1 and 4")
     manifest_path = settings.data_dir / "playlist.json"
     manifest = None
     if manifest_path.exists() and not refresh_playlist:
@@ -102,49 +122,75 @@ def ingest_playlist(settings: Settings, url: str = PLAYLIST_URL, limit: int | No
         atomic_json(manifest_path, manifest)
     directory = settings.data_dir / "transcripts"
     directory.mkdir(exist_ok=True)
-    videos = manifest["videos"][:limit] if limit else manifest["videos"]
+    videos = [{**v,"playlist_position":v.get("playlist_position") or i}
+              for i,v in enumerate(manifest["videos"],1)]
+    videos = [v for v in videos if v["playlist_position"] >= start_position and
+              (end_position is None or v["playlist_position"] <= end_position)]
+    if limit:
+        videos = videos[:limit]
     report = {"playlist_url":url,"playlist_title":manifest["title"],"selected":len(videos),
-              "cached":0,"completed":0,"failed":[],"aborted":False}
+              "cached":0,"completed":0,"failed":[],"aborted":False, "attempted":0,
+              "total_playlist_videos":len(manifest["videos"])}
+    stop = threading.Event()
+
+    def prepare(video):
+        if stop.is_set():
+            return "skipped", video, None
+        path = directory / (video["video_id"] + ".json")
+        cached = load_cached(path)
+        if cached and cached.video_id == video["video_id"]:
+            return "cached", video, None
+        try:
+            try:
+                transcript = captions(video)
+            except Exception as exc:
+                if type(exc).__name__ in {"RequestBlocked", "IpBlocked"} or not allow_whisper:
+                    raise
+                transcript = whisper(video, settings)
+            atomic_json(path, transcript.model_dump())
+            for audio in (settings.data_dir / "audio").glob(video["video_id"] + ".*"):
+                audio.unlink(missing_ok=True)
+            time.sleep(1)
+            return "completed", video, None
+        except Exception as exc:
+            kind = type(exc).__name__
+            if kind in {"RequestBlocked", "IpBlocked"}:
+                stop.set()
+            return "failed", video, kind
+
     consecutive = 0
     try:
-        for i, video in enumerate(videos):
-            path = directory / (video["video_id"] + ".json")
-            cached = load_cached(path)
-            if cached and cached.video_id == video["video_id"]:
-                report["cached"] += 1
-                consecutive = 0
-                print(f"[{i+1}/{len(videos)}] cached: {video['title']}", flush=True)
+        if workers == 1:
+            results = map(prepare,videos)
+            pool = None
+        else:
+            pool = ThreadPoolExecutor(max_workers=workers)
+            futures = [pool.submit(prepare,v) for v in videos]
+            results = (f.result() for f in as_completed(futures))
+        for status, video, error in results:
+            if status == "skipped":
                 continue
-            try:
-                try:
-                    transcript = captions(video)
-                except Exception as exc:
-                    # Missing captions can use offline Whisper. IP blocks cannot be fixed by downloading audio.
-                    if type(exc).__name__ in {"RequestBlocked", "IpBlocked"} or not allow_whisper:
-                        raise
-                    print(f"Captions unavailable ({type(exc).__name__}); transcribing audio", flush=True)
-                    transcript = whisper(video, settings)
-                atomic_json(path, transcript.model_dump())
-                for audio in (settings.data_dir / "audio").glob(video["video_id"] + ".*"):
-                    audio.unlink(missing_ok=True)
-                report["completed"] += 1
-                consecutive = 0
-                print(f"[{i+1}/{len(videos)}] saved: {video['title']} ({transcript.source})", flush=True)
-                time.sleep(1)
-            except Exception as exc:
-                # Keep errors useful without printing provider credentials or download URLs.
-                kind = type(exc).__name__
-                report["failed"].append({"video_id":video["video_id"],"title":video["title"],"error":kind})
+            report["attempted"] += 1
+            if status == "failed":
+                report["failed"].append({"video_id":video["video_id"],"title":video["title"],"error":error})
                 consecutive += 1
-                print(f"[{i+1}/{len(videos)}] failed: {video['video_id']} ({kind})", flush=True)
-                if kind in {"RequestBlocked", "IpBlocked"} or consecutive >= 3:
+                if error in {"RequestBlocked", "IpBlocked"} or consecutive >= 3:
+                    stop.set()
                     report["aborted"] = True
-                    print("Stopped after an IP block or repeated failures. Cached transcripts are safe.", flush=True)
-                    break
+            else:
+                report[status] += 1
+                consecutive = 0
+            position = video.get("playlist_position", "?")
+            print(f"[{report['attempted']}/{len(videos)}] #{position} {status}: {video['title']}" +
+                  (f" ({error})" if error else ""), flush=True)
     except KeyboardInterrupt:
+        stop.set()
         report["aborted"] = True
         print("Interrupted; cached transcripts are safe.", flush=True)
     finally:
+        if 'pool' in locals() and pool is not None:
+            pool.shutdown(wait=True,cancel_futures=True)
+        report["unattempted"] = report["selected"] - report["attempted"]
         atomic_json(settings.data_dir / "ingest_report.json", report)
     return report
 

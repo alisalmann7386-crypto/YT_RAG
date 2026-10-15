@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "a2z-studyroom"
-version = "0.1.0"
+version = "0.2.0"
 description = "Deployable timestamp-aware RAG for Striver's A2Z DSA playlist"
 requires-python = ">=3.11"
 dependencies = [
@@ -25,7 +25,7 @@ a2z = "app.cli:main"
 include = ["app*"]
 
 [tool.setuptools.package-data]
-app = ["static/*", "seed_notes.json"]
+app = ["static/*", "seed_notes.json", "playlist_catalog.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

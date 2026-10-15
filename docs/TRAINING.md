@@ -50,13 +50,23 @@ The tool prefers English captions, then Hindi (`CAPTION_LANGUAGES=en,hi`). Inspe
 python -m app.cli ingest
 ```
 
-The command resumes valid cached transcripts. To discover newly added videos:
+The command resumes valid cached transcripts. For modest concurrency use `python -m app.cli ingest --workers 3` (maximum 4; default 1). In-flight requests may finish after a failure triggers a stop. Never increase concurrency to work around a known block. To discover newly added videos:
 
 ```bash
 python -m app.cli ingest --refresh-playlist
 ```
 
 An IP block or three consecutive failures stops the run. Completed transcripts survive interruption. Cached, newly completed, selected, and failed counts are reported separately.
+
+### Prepare a particular section
+
+```bash
+python -m app.cli ingest --start-position 182 --end-position 237 --workers 3
+python -m app.cli index
+python -m app.cli catalog
+```
+
+Positions are the original playlist positions, not the number of successfully downloaded videos. The creator’s `DP 1`, `G-5`, etc. series labels are retained separately. Refreshing the catalog does not fetch captions. Rebuild the index after updating metadata so the deployed snapshot includes the new order.
 
 ### Missing captions
 
@@ -70,6 +80,10 @@ python -m app.cli ingest --limit 3 --whisper
 Defaults: `WHISPER_MODEL=small`, `WHISPER_DEVICE=cpu`, `WHISPER_LANGUAGE=en`. Test a representative lecture before scaling. CPU transcription of a long playlist can take substantial time. NVIDIA GPU execution requires compatible CUDA libraries; Intel Arc is not the CUDA backend. The app does not promise a fixed processing time.
 
 Audio is deleted only after the transcript is safely written. `--whisper` does not attempt audio download after a known IP block. Failed audio may remain under `data/audio/` for inspection. The web-serving install does not need Whisper.
+
+### Certificate trust errors
+
+Use an up-to-date trusted CA store. On a managed machine whose corporate CA is installed in the OS store, set `YOUTUBE_USE_SYSTEM_CA=true`; for the captions client, `REQUESTS_CA_BUNDLE` can point to your trusted PEM bundle. On Linux this may be `/etc/ssl/certs/ca-certificates.crt`; use your actual platform’s path. Do not disable HTTPS verification.
 
 ### Blocked access or unavailable transcripts
 
@@ -109,7 +123,7 @@ python -m app.cli stats
 python -m app.cli search "recursion base case"
 ```
 
-This builds `data/index.sqlite3` from your cached transcripts and **replaces the demo corpus**. The default is 75-second windows with 15 seconds of target overlap, aligned to full segments. Boundaries can vary because segments are never split. A long single segment remains intact. Invalid transcripts fail before the old index is replaced.
+This builds `data/index.sqlite3` from your cached transcripts and **replaces the demo corpus**. The default is 75-second windows with 15 seconds of target overlap, aligned to full segments. Retrieved sources retain individual subtitle segments; timestamp links use the best matching caption inside the window, rewound four seconds. Captions are approximate and may contain recognition errors. Short summaries select relevant source sentences and are explicitly labeled extractive. Boundaries can vary because segments are never split. A long single segment remains intact. Invalid transcripts fail before the old index is replaced.
 
 ### Optional semantic index
 
@@ -198,3 +212,11 @@ subprocess.run([sys.executable,'-m','app.cli','index','--semantic'],check=True)
 Download `index.sqlite3` and deploy matching model settings. Colab is for preparation, not a permanent public server.
 
 Back up both `data/transcripts/` and `data/index.sqlite3`. They are ignored by Git. Keeping an index privately does not automatically authorize redistributing complete lecture transcripts in a public repository. To update content, refresh metadata, ingest, and rebuild; no fine-tuning is required.
+
+## Export the prepared runtime
+
+```bash
+python -m app.cli export --output a2z_index.zip
+```
+
+Transfer this archive privately, extract `index.sqlite3` into the server’s data directory, and verify the supplied checksum. Application source comes from GitHub. No raw audio, cookies, API keys or request logs are included. The database embeds playlist metadata and coverage, so the target machine needs no YouTube ingestion packages to answer questions. Only the optional LLM and semantic query embedder have their own network/model requirements.

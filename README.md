@@ -2,11 +2,15 @@
 
 A deployable study application for [Striver’s A2Z DSA playlist](https://www.youtube.com/playlist?list=PLgUwDviBIf0oF6QL8m22w1hIDC1vJ_BHz). Ask a question, retrieve transcript segments, and open the lecture near the explanation. Generated answers are optional; retrieval works without an LLM key.
 
-**Current data status:** this repository ships **22 original DSA study notes**, not Striver’s lecture transcripts. The demo is labeled and has no invented video citations. Run ingestion and indexing to prepare your actual playlist library. Full-playlist ingestion, real embedding downloads, and provider calls still need user-side validation. See [validation](docs/VALIDATION.md).
+**What students get:** ask “Where is binary search taught?” or “Revise distinct subsequences” to see the video title, playlist position, the creator's series label (for example `DP 32`), a timestamp link, and a short extractive recap from indexed captions. Optional LLM explanations add examples, hints and code.
+
+**Data included in GitHub:** a verified catalog of **315 accessible A2Z videos** (15 October 2026 UTC), plus 22 original DSA revision notes. One unavailable/untitled playlist entry was excluded. The catalog provides genuine lecture links immediately; timestamps and lecture summaries require a prepared caption index. Raw lecture transcripts, API keys and runtime databases are not committed. Coverage is visible in the website and `/api/stats`; no title-only result is presented as a verified timestamp.
 
 ## Features
 
-- Timestamp citations, source excerpts, and an embedded YouTube player.
+- Caption-level timestamp links, playlist positions, series labels, concise extractive summaries, and an embedded YouTube player.
+- Find lecture and Quick revision modes; title-search fallback for missing captions.
+- Full playlist browser, caption coverage, saved lectures on your device, and chat exports including source links.
 - Per-lecture retrieval filters; English, Hinglish, and Hindi response choices.
 - Explain, hint, compare, complexity, and code modes with a configured LLM.
 - Captions-first offline ingestion, cached resume, optional Whisper, JSON/SRT/VTT imports.
@@ -44,7 +48,7 @@ RAG uses pretrained models. You build its knowledge index rather than training a
 
 ```bash
 python -m app.cli preflight
-python -m app.cli ingest --limit 3
+python -m app.cli ingest --start-position 8 --limit 3
 python -m app.cli index
 python -m app.cli search "recursion base case"
 ```
@@ -52,16 +56,24 @@ python -m app.cli search "recursion base case"
 Inspect `data/transcripts/` and `data/ingest_report.json`. When the pilot works:
 
 ```bash
-python -m app.cli ingest
+python -m app.cli ingest --workers 3
 python -m app.cli index
 python -m app.cli stats
 ```
 
-Ingestion caches timestamped text; indexing creates the query snapshot. Real indexing replaces the demo corpus. The running server notices a rebuilt index on the next request. Rerunning ingestion skips valid cached work. A blocked or partial run records failures and exits nonzero.
+Ingestion caches timestamped text; indexing creates the query snapshot. Real indexing replaces the demo corpus. The running server notices a rebuilt index on the next request. Rerunning ingestion skips valid cached work. A blocked or partial run records failures and exits nonzero. Run again to resume transient failures; known IP blocks stop new requests. Use `--start-position` / `--end-position` to prepare particular sections. Refresh title metadata alone with `python -m app.cli catalog`.
 
 **Your users do not download any videos.** Available captions are fetched once as text by the administrator. Only optional offline Whisper preparation downloads audio for missing captions. Deployed retrieval reads the prepared index and is tested with YouTube/network access blocked; playing the linked video still requires YouTube access.
 
 Read **[docs/TRAINING.md](docs/TRAINING.md)** for the complete setup, semantic embeddings, missing captions, Colab, and evaluation.
+
+## Move a prepared index to another machine
+
+```bash
+python -m app.cli export --output a2z_index.zip
+```
+
+Extract `index.sqlite3` into the target `data/` directory and start the server. The archive includes its SHA256 checksum and coverage report. The snapshot also contains playlist order, so no playlist scrape is needed at query time. See the deployment guide for HTTPS index transfer on Render.
 
 ## Enable generated explanations
 
@@ -106,6 +118,7 @@ The container binds to `0.0.0.0:8000` and mounts `./data`. The server reads a pr
 | `GET /health` | Process health and corpus readiness |
 | `GET /api/stats` | Corpus size and configuration |
 | `GET /api/videos` | Indexed library |
+| `POST /api/locate` | Search the verified lecture catalog by title |
 | `POST /api/search` | Retrieval only |
 | `POST /api/ask` | Answer with source references |
 
@@ -119,11 +132,13 @@ If `APP_API_KEY` is set, add `X-API-Key` or enter it in UI settings. Default UI/
 
 ## Source layout and checks
 
-`app/main.py` serves FastAPI; `ingest.py` prepares transcripts; `chunking.py` preserves timestamps; `retrieval.py` ranks evidence; `answer.py` handles prompting and citations; `cli.py` builds/evaluates indexes; `store.py` writes atomic snapshots; `bootstrap.py` prepares remote indexes; `static/` contains the UI. Runtime data and `.env` are ignored by Git.
+`app/main.py` serves FastAPI; `ingest.py` prepares transcripts; `chunking.py` preserves timestamps; `retrieval.py` ranks evidence; `answer.py` handles prompting and citations; `cli.py` builds/evaluates indexes; `store.py` writes atomic snapshots; `bootstrap.py` prepares remote indexes; `catalog.py` handles metadata-only lecture discovery; `static/` contains the UI. Runtime data and `.env` are ignored by Git.
 
 ```bash
 python -m pytest -q
 python -m app.cli eval --file data/eval.json
+# With actual prepared captions, use the live regression targets:
+python -m app.cli eval --file data/eval_lectures.json
 ```
 
 The bundled evaluation set is for demo notes. Replace expected titles with real video IDs and timestamp ranges after playlist ingestion.

@@ -1,22 +1,28 @@
 # Validation performed
 
-Date: 14 October 2026 (India time). Python 3.12.
+Date: 16 October 2026 (India time). Python 3.12.
 
-- **21 automated tests passed**: timestamp/overlap preservation, deterministic IDs, repeated indexing, preservation after corrupt input, refusal queries, note/lecture attribution, lecture filters, server reload after indexing, SRT import, cached ingestion resume and block handling, API validation/authentication/rate limits, provider failure fallback, citation validation, code indices, hybrid ranking, Qdrant query shape, verified index download and checksum rejection.
-- **8/8 demo retrieval evaluation cases passed**, including unrelated React, income tax, and cricket questions.
-- Python modules compile and frontend JavaScript passes `node --check`.
-- Uvicorn successfully starts on `0.0.0.0:8000`; HTTP endpoints and static assets are smoke-tested.
-- Repository whitespace validation passes.
-- A hosting regression retrieves a timed lecture fixture while external network access and YouTube/Whisper imports are blocked. Both search and answer return its saved timestamp without any external request. Provider downtime falls back to that evidence, and bootstrap reuses an existing local index without a download.
+## Current data status
 
-Tested versions: FastAPI 0.143.0, Uvicorn 0.54.0, httpx 0.28.1, python-dotenv 1.2.4, pydantic 2.13.5, pytest 9.1.1. The ingestion packages installed successfully (yt-dlp 2026.8.19, youtube-transcript-api 1.2.4).
+The official A2Z playlist was read live. It contained 315 accessible titled videos and one unavailable/untitled entry, which was excluded. The full accessible title catalog is committed with its retrieval date; playlist positions remain the original positions.
 
-The optional dense/Qdrant tests use deterministic fixture vectors and mocked HTTP responses. They do not claim that a real semantic model was downloaded or a live Qdrant cluster was queried. LLM tests use mocked responses, not a paid API key. No provider key was required to start the actual demo server.
+Real captions were successfully retrieved for the first 25 accessible videos. Indexing produced 935 timed windows. The next video returned `RequestBlocked`, so ingestion stopped without further requests. The prepared snapshot therefore has **25/315 lectures with caption evidence (7.9%)**; the remaining 290 lectures support title-based discovery only. Full-playlist caption ingestion is not claimed. A prior transient proxy error was retried only before the explicit block was observed.
 
-Full YouTube ingestion was **not** completed: the environment's certificate chain prevented yt-dlp from accessing the playlist. The official A2Z playlist URL was verified through web retrieval. No real Striver transcripts or fabricated lecture timestamps are bundled.
+The trusted OS CA store resolved the environment's original certificate-chain error; TLS verification was never disabled. Caption requests now have bounded connect/read timeouts.
 
-Browser rendering was attempted, but a Playwright browser executable was unavailable. Responsive CSS and JavaScript were checked in source; visual/browser interactions still need verification on your device. Docker was unavailable, so the Docker image was not built. No external hosting deployment was created; deployment configuration and instructions are included.
+## Code checks
 
-GitHub Actions reruns the base tests on pushes. Optional vector tests skip if NumPy is not installed. The base app does not require NumPy, PyTorch, Whisper, or Qdrant.
+- 30 automated tests pass, including all prior regression tests plus playlist positions and series labels, caption-level seek timestamps, summaries, title-only fallback, protection against incidental timestamp matches, coverage reporting, section ingestion, concurrent ingestion, portable export/checksum, malformed catalog handling, new API modes, and no-network serving.
+- The notes-demo retrieval evaluation passes 8/8 cases. The separate live-caption evaluation passes **9/9 cases** (six known lecture/time-window targets and three unrelated-question refusals). This is a small retrieval regression set, not a full-playlist quality score.
+- Python modules compile, frontend JavaScript passes `node --check`, and repository whitespace checks pass.
+- FastAPI test clients verify the website/static assets and API responses. Saved lecture controls and exported source links are implemented in the browser client.
 
-Before sharing the real app: ingest a small pilot, inspect transcript accuracy, evaluate actual video/timestamp targets, configure an LLM if desired, and verify the UI and hosting integrations. Syntactically valid citations do not establish factual correctness of every generated claim.
+Timestamp tests verify the data-to-link mapping. Actual captions may have speech-recognition errors; a link seeks to the best matching subtitle segment with four seconds of lead-in, rather than claiming independently verified audiovisual precision.
+
+Optional dense/Qdrant tests use deterministic fixture vectors and mocked HTTP. LLM tests use mocked responses. A real semantic model, live Qdrant service, or paid LLM key was not used. BM25 and extractive revision require none of them.
+
+## Verification limits
+
+Browser rendering was not run because the prescribed browser-control capability was unavailable. Docker image building and external hosting were not run. The FastAPI repository includes Render/Docker deployment configuration; it is not an already deployed public URL.
+
+For the missing lectures, rerun ingestion on your own laptop/network or import timestamped captions obtained with permission, then rebuild the index. Do not repeatedly retry a known YouTube IP block. For deployment, transfer the prepared database; do not scrape YouTube inside visitor requests.

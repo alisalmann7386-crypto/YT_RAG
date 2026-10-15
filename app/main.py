@@ -15,6 +15,7 @@ from app.answer import answer_question, retrieval_query, source
 from app.config import Settings, PLAYLIST_URL
 from app.models import AskRequest
 from app.retrieval import Retriever
+from app.catalog import lecture_label, load_catalog, locate
 
 
 class RateLimiter:
@@ -52,7 +53,7 @@ def create_app(settings: Settings | None = None):
         retriever.refresh()
         yield
 
-    app = FastAPI(title="A2Z Studyroom API", version="0.1.0", lifespan=lifespan)
+    app = FastAPI(title="A2Z Studyroom API", version="0.2.0", lifespan=lifespan)
     app.state.retriever = retriever
     origins = [o.strip() for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip()]
     if origins:
@@ -84,22 +85,40 @@ def create_app(settings: Settings | None = None):
     def stats():
         retriever.refresh()
         lectures = {c.video_id for c in retriever.chunks if c.kind == "lecture"}
+        catalog = retriever.metadata.get("playlist") or load_catalog(settings.data_dir)
+        catalog_ids = {v["video_id"] for v in catalog["videos"]}
         return {"chunks":len(retriever.chunks),"lectures":len(lectures),"notes":sum(c.kind=="note" for c in retriever.chunks),
+            "catalog_lectures":len(catalog_ids),"unindexed_lectures":len(catalog_ids-lectures),
+            "coverage_percent":round(100*len(lectures & catalog_ids)/max(1,len(catalog_ids)),1),
+            "catalog_verified_at":catalog.get("verified_at"),
             "backend":settings.backend,"llm_provider":settings.provider,"model":settings.llm_model if settings.provider != "none" else None,
-            "playlist_url":PLAYLIST_URL,"corpus":retriever.metadata.get("corpus", "empty"),
+            "playlist_url":catalog.get("url",PLAYLIST_URL),"corpus":retriever.metadata.get("corpus", "empty"),
             "indexed_at":retriever.metadata.get("indexed_at"),"access_key_required":bool(settings.app_key)}
 
     @app.get("/api/videos", dependencies=[Depends(authorize)])
     def videos():
         retriever.refresh()
-        items = {}
+        catalog = retriever.metadata.get("playlist") or load_catalog(settings.data_dir)
+        items = {v["video_id"]:{**v,"id":v["video_id"],"kind":"catalog","chunks":0,
+                               "topic":"A2Z playlist", "indexed":False,
+                               "lecture_label":lecture_label(v["title"])} for v in catalog["videos"]}
         for c in retriever.chunks:
             key = c.video_id or c.id
             if key not in items:
-                items[key] = {"id":key,"video_id":c.video_id,"title":c.title,"kind":c.kind,"topic":c.topic,"chunks":0,"duration":0}
+                items[key] = {"id":key,"video_id":c.video_id,"title":c.title,"kind":c.kind,"topic":c.topic,"chunks":0,"duration":0,
+                              "playlist_position":c.playlist_position,"lecture_label":lecture_label(c.title)}
+            items[key]["kind"] = c.kind
+            items[key]["indexed"] = True
             items[key]["chunks"] += 1
             items[key]["duration"] = max(items[key]["duration"], c.end or 0)
-        return {"items":list(items.values())}
+        return {"items":sorted(items.values(),key=lambda v:(v.get("playlist_position") or 100000,v["title"]))}
+
+    @app.post("/api/locate", dependencies=[Depends(authorize), Depends(limited)])
+    def locate_lecture(payload: AskRequest):
+        retriever.refresh()
+        catalog = retriever.metadata.get("playlist") or load_catalog(settings.data_dir)
+        return {"items":locate(retrieval_query(payload),catalog,payload.top_k,payload.video_id),
+                "basis":"playlist titles only; timestamps require indexed transcripts"}
 
     @app.post("/api/search", dependencies=[Depends(authorize), Depends(limited)])
     def search(payload: AskRequest):

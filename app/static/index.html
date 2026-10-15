@@ -15,6 +15,7 @@
    <button id="new-chat" class="new-chat"><span>＋</span> New conversation <kbd>⌘ K</kbd></button>
    <div class="section-label">YOUR LIBRARY <button id="refresh" title="Refresh indexed library" aria-label="Refresh indexed library">↻</button></div>
    <div class="library-search"><span aria-hidden="true">⌕</span><input id="library-search" placeholder="Find a topic or lecture" aria-label="Search your library"></div>
+   <div class="library-controls"><select id="library-view" aria-label="Library view"><option value="all">All lectures & notes</option><option value="indexed">Captions indexed</option><option value="saved">Saved for revision</option></select><span id="saved-count">0 saved</span></div>
    <div class="library" id="library"><p class="muted">Loading your library…</p></div>
    <div class="sidebar-bottom">
     <button id="index-help" class="import-button"><span>⇧</span> Add playlist transcripts <span>↗</span></button>
@@ -32,11 +33,11 @@
      <div id="welcome" class="welcome">
       <div class="eyebrow"><span></span> A LITTLE CLARITY. A LOT OF PROGRESS.</div>
       <h1>Your next <em>“aha!”</em><br>starts here.</h1>
-      <p class="welcome-description">Ask a DSA question. Find the idea, the explanation,<br class="desktop-break"> and the exact lecture moment that makes it click.</p>
+      <p class="welcome-description">Where was that taught? Find the lecture, jump to the<br class="desktop-break"> explanation, and get a short summary for revision.</p>
       <div class="library-status" id="corpus-banner">Checking indexed material…</div>
       <div class="prompt-grid">
-       <button class="prompt-card" data-question="What is the difference between memoization and tabulation?"><span class="card-symbol">↗</span><span class="card-label">CONNECT THE DOTS</span><strong>Memoization vs.<br>tabulation</strong><span class="card-arrow">↗</span></button>
-       <button class="prompt-card" data-question="Explain binary search and its invariant with an example."><span class="card-symbol">⌕</span><span class="card-label">BUILD INTUITION</span><strong>Why does binary<br>search work?</strong><span class="card-arrow">↗</span></button>
+       <button class="prompt-card" data-question="Where is memoization and tabulation taught?" data-mode="locate"><span class="card-symbol">↗</span><span class="card-label">FIND THE LECTURE</span><strong>Memoization vs.<br>tabulation</strong><span class="card-arrow">↗</span></button>
+       <button class="prompt-card" data-question="Give me a short revision summary of binary search." data-mode="summary"><span class="card-symbol">⌕</span><span class="card-label">QUICK REVISION</span><strong>Revisit<br>binary search</strong><span class="card-arrow">↗</span></button>
        <button class="prompt-card" data-question="Give me a hint for longest substring without repeating characters." data-mode="hint"><span class="card-symbol">✦</span><span class="card-label">THINK IT THROUGH</span><strong>A nudge for<br>sliding window</strong><span class="card-arrow">↗</span></button>
        <button class="prompt-card" data-question="Explain the DP recurrence for distinct subsequences."><span class="card-symbol">⤳</span><span class="card-label">BREAK IT DOWN</span><strong>Understand distinct<br>subsequences</strong><span class="card-arrow">↗</span></button>
       </div>
@@ -47,8 +48,8 @@
       <div class="filter-row"><span id="filter-label">Searching all indexed material</span><button id="clear-filter" hidden>Clear lecture filter ×</button></div>
       <form id="question-form" class="composer">
        <label class="sr-only" for="question">Your DSA question</label>
-       <textarea id="question" rows="2" maxlength="1200" placeholder="Ask about an idea, an approach, or a tricky step…" required></textarea>
-       <div class="composer-tools"><div class="selectors"><label><span>Mode</span><select id="mode" aria-label="Study mode"><option value="explain">Explain</option><option value="hint">Hint only</option><option value="compare">Compare</option><option value="complexity">Complexity</option><option value="code">Code</option></select></label><label><span>Language</span><select id="language" aria-label="Answer language"><option>English</option><option>Hinglish</option><option>Hindi</option></select></label><label id="code-label" hidden><span>Code</span><select id="code-language" aria-label="Code language"><option>Python</option><option>C++</option><option>Java</option></select></label></div><button type="submit" id="send" aria-label="Send your question">↑</button></div>
+       <textarea id="question" rows="2" maxlength="1200" placeholder="Where is binary search on answers taught? Give me a quick recap…" required></textarea>
+       <div class="composer-tools"><div class="selectors"><label><span>Mode</span><select id="mode" aria-label="Study mode"><option value="explain">Explain</option><option value="locate">Find lecture</option><option value="summary">Quick revision</option><option value="hint">Hint only</option><option value="compare">Compare</option><option value="complexity">Complexity</option><option value="code">Code</option></select></label><label><span>Language</span><select id="language" aria-label="Answer language"><option>English</option><option>Hinglish</option><option>Hindi</option></select></label><label id="code-label" hidden><span>Code</span><select id="code-language" aria-label="Code language"><option>Python</option><option>C++</option><option>Java</option></select></label></div><button type="submit" id="send" aria-label="Send your question">↑</button></div>
       </form>
       <div class="composer-note"><span>▣ Evidence first. Always check the source.</span><span>Enter to send · Shift + Enter for a new line</span></div>
      </div>
@@ -58,6 +59,7 @@
      <div id="empty-evidence" class="empty-evidence"><div class="evidence-art"><div class="art-sheet"><i></i><i></i><i></i><span>▶</span></div><div class="art-badge">✓</div></div><h2>See where it comes from.</h2><p>Your source excerpts and lecture moments will appear here after you ask a question.</p><div class="small-divider"></div><span>Read it. Watch it. Make it yours.</span></div>
      <div id="player-wrapper" hidden><iframe id="player" title="Selected lecture segment" allow="encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe><a id="player-link" target="_blank" rel="noopener noreferrer">Open lecture on YouTube ↗</a></div>
      <div id="evidence-list" class="evidence-list"></div>
+     <div id="lecture-matches" class="lecture-matches" hidden></div>
      <div class="evidence-footer"><span class="dot"></span> Sources come from your indexed library.</div>
     </aside>
    </div>

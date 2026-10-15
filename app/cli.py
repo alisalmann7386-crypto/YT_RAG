@@ -6,6 +6,7 @@ import os
 import sqlite3
 import sys
 import uuid
+import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 import httpx
@@ -14,6 +15,7 @@ from app.config import PLAYLIST_URL, Settings
 from app.models import Chunk, Transcript
 from app.retrieval import Retriever, embed
 from app.store import atomic_json, build_database, load_database
+from app.catalog import load_catalog
 
 
 def publish_vectors(settings, chunks, vectors):
@@ -47,6 +49,8 @@ def publish_vectors(settings, chunks, vectors):
 
 def build_index(settings: Settings, demo=False, semantic=False, qdrant=False):
     chunks = []
+    catalog = load_catalog(settings.data_dir)
+    positions = {v["video_id"]:v["playlist_position"] for v in catalog["videos"]}
     if demo:
         data = json.loads((Path(__file__).parent / "seed_notes.json").read_text(encoding="utf-8"))
         chunks = [Chunk(**entry) for entry in data]
@@ -60,6 +64,7 @@ def build_index(settings: Settings, demo=False, semantic=False, qdrant=False):
                 transcript = Transcript.model_validate_json(path.read_text(encoding="utf-8"))
             except ValueError as exc:
                 raise ValueError(f"Invalid transcript {path.name}; repair or move it before indexing") from exc
+            transcript.playlist_position = positions.get(transcript.video_id, transcript.playlist_position)
             chunks.extend(chunk_transcript(transcript, settings.chunk_seconds, settings.overlap))
     if not chunks:
         raise ValueError("No usable chunks; existing index preserved")
@@ -71,6 +76,11 @@ def build_index(settings: Settings, demo=False, semantic=False, qdrant=False):
         "indexed_at":datetime.now(timezone.utc).isoformat(),"chunks":len(chunks),
         "chunk_seconds":settings.chunk_seconds,"chunk_overlap":settings.overlap,
         "embedding_model":settings.embedding_model if semantic else None}
+    metadata["playlist"] = catalog
+    indexed_videos = {c.video_id for c in chunks if c.video_id}
+    metadata["coverage"] = {"catalog_videos":len(catalog["videos"]),
+                            "indexed_lectures":len(indexed_videos),
+                            "missing_video_ids":[v["video_id"] for v in catalog["videos"] if v["video_id"] not in indexed_videos]}
     if qdrant:
         if not semantic:
             raise ValueError("--qdrant requires --semantic")
@@ -100,6 +110,33 @@ def evaluate(settings, path):
     return summary["passed"] == summary["total"] and summary["total"] > 0
 
 
+def export_index(settings, output):
+    """Portable runtime snapshot; no API keys, cookies, raw audio, or server logs."""
+    chunks, _, metadata = load_database(settings.database)
+    if not chunks:
+        raise ValueError("Build a nonempty index before exporting")
+    output = output.resolve()
+    if output == settings.database:
+        raise ValueError("Output must not overwrite the active index")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    content = settings.database.read_bytes()
+    checksum = hashlib.sha256(content).hexdigest()
+    readme = ("A2Z Studyroom prepared index\n\n"
+              "Extract index.sqlite3 into your YT_RAG data directory.\n"
+              "Start with: python -m app.cli serve\n"
+              "Visitors query this snapshot without YouTube downloads.\n"
+              "Check /api/stats for caption coverage; missing videos remain title-searchable.\n"
+              "This archive contains runtime data, not application source or API keys.\n"
+              "For cloud transfer see docs/DEPLOYMENT.md in the repository.\n")
+    with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr("index.sqlite3",content)
+        archive.writestr("index.sha256",checksum+"  index.sqlite3\n")
+        archive.writestr("coverage.json",json.dumps(metadata.get("coverage",{}),indent=2))
+        archive.writestr("README.txt",readme)
+    return {"archive":str(output),"sha256":checksum,"chunks":len(chunks),
+            "lectures":len({c.video_id for c in chunks if c.video_id}),"bytes":output.stat().st_size}
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description="A2Z Studyroom: prepare transcripts, index, evaluate, and serve")
     sub = parser.add_subparsers(dest="command",required=True)
@@ -108,6 +145,11 @@ def main(argv=None):
     ingest.add_argument("--limit",type=int)
     ingest.add_argument("--whisper",action="store_true",help="Explicitly allow audio transcription when captions are absent")
     ingest.add_argument("--refresh-playlist",action="store_true")
+    ingest.add_argument("--start-position",type=int,default=1)
+    ingest.add_argument("--end-position",type=int)
+    ingest.add_argument("--workers",type=int,default=1,help="Concurrent caption requests, 1–4; default 1")
+    catalog_command = sub.add_parser("catalog",help="Refresh only playlist titles, order and links; no audio or captions")
+    catalog_command.add_argument("--playlist",default=os.getenv("PLAYLIST_URL",PLAYLIST_URL))
     index = sub.add_parser("index",help="Build a complete index from cached transcripts")
     index.add_argument("--demo",action="store_true")
     index.add_argument("--semantic",action="store_true")
@@ -123,6 +165,8 @@ def main(argv=None):
     serve.add_argument("--host",default="0.0.0.0")
     serve.add_argument("--port",type=int,default=int(os.getenv("PORT","8000")))
     serve.add_argument("--reload",action="store_true")
+    export = sub.add_parser("export",help="Package the prepared index for offline/cloud transfer")
+    export.add_argument("--output",type=Path,default=Path("a2z_index.zip"))
     sub.add_parser("stats")
     sub.add_parser("preflight",help="Check local dependencies and configuration without paid calls")
     ev = sub.add_parser("eval")
@@ -131,13 +175,22 @@ def main(argv=None):
     settings = Settings()
     try:
         if args.command == "index":
-            print(json.dumps(build_index(settings,args.demo,args.semantic,args.qdrant),indent=2))
+            metadata = build_index(settings,args.demo,args.semantic,args.qdrant)
+            print(json.dumps({k:v for k,v in metadata.items() if k not in {"playlist","coverage"}} |
+                             {"coverage":{k:v for k,v in metadata["coverage"].items() if k != "missing_video_ids"}},indent=2))
         elif args.command == "ingest":
             from app.ingest import ingest_playlist
-            report = ingest_playlist(settings,args.playlist,args.limit,args.whisper,args.refresh_playlist)
+            report = ingest_playlist(settings,args.playlist,args.limit,args.whisper,args.refresh_playlist,
+                                     args.start_position,args.end_position,args.workers)
             print(json.dumps(report,indent=2))
             if report["failed"] or report["aborted"]:
                 return 2
+        elif args.command == "catalog":
+            from app.ingest import list_playlist
+            manifest = list_playlist(args.playlist)
+            atomic_json(settings.data_dir / "playlist.json",manifest)
+            print(json.dumps({"title":manifest["title"],"videos":len(manifest["videos"]),
+                              "path":str(settings.data_dir / "playlist.json")},indent=2))
         elif args.command == "import":
             from app.ingest import import_transcript
             print(import_transcript(args.file,settings,args.video_id,args.title))
@@ -145,9 +198,13 @@ def main(argv=None):
             from app.answer import source
             hits = Retriever(settings).search(args.question, settings.top_k,args.video_id)
             print(json.dumps([source(h,i+1,settings) for i,h in enumerate(hits)],indent=2,ensure_ascii=False))
+        elif args.command == "export":
+            print(json.dumps(export_index(settings,args.output),indent=2))
         elif args.command == "stats":
             chunks,_,metadata = load_database(settings.database)
-            print(json.dumps({**metadata,"lectures":len({c.video_id for c in chunks if c.video_id})},indent=2))
+            print(json.dumps({k:v for k,v in metadata.items() if k not in {"playlist","coverage"}} |
+                             {"coverage":{k:v for k,v in metadata.get("coverage",{}).items() if k != "missing_video_ids"},
+                              "lectures":len({c.video_id for c in chunks if c.video_id})},indent=2))
         elif args.command == "eval":
             return 0 if evaluate(settings,args.file) else 1
         elif args.command == "preflight":

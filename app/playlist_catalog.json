@@ -1,0 +1,1899 @@
+{
+  "url": "https://www.youtube.com/playlist?list=PLgUwDviBIf0oF6QL8m22w1hIDC1vJ_BHz",
+  "title": "Strivers A2Z-DSA Course | DSA Playlist | Placements",
+  "videos": [
+    {
+      "video_id": "0bHoB32fuj0",
+      "title": "Don't watch my A2Z DSA Course",
+      "duration": 504,
+      "playlist_position": 1
+    },
+    {
+      "video_id": "h3uDCJ5mvgw",
+      "title": "How to setup VS code for DSA and CP | Input / Output split format",
+      "duration": 531,
+      "playlist_position": 2
+    },
+    {
+      "video_id": "EAR7De6Goz4",
+      "title": "C++ Basics in One Shot - Strivers A2Z DSA Course - L1",
+      "duration": 5187,
+      "playlist_position": 3
+    },
+    {
+      "video_id": "FPu9Uld7W-E",
+      "title": "Time and Space Complexity - Strivers A2Z DSA Course",
+      "duration": 2116,
+      "playlist_position": 4
+    },
+    {
+      "video_id": "tNm_NNSB3_w",
+      "title": "Solve any Pattern Question - Trick Explained | 22 Patterns in 1 Shot | Strivers A2Z DSA Course",
+      "duration": 4926,
+      "playlist_position": 5
+    },
+    {
+      "video_id": "RRVYpIET_RU",
+      "title": "Complete C++ STL in 1 Video | Time Complexity and Notes",
+      "duration": 4057,
+      "playlist_position": 6
+    },
+    {
+      "video_id": "1xNbjMdbjug",
+      "title": "Basic Maths for DSA | Euclidean Algorithm | Strivers A2Z DSA Course",
+      "duration": 3800,
+      "playlist_position": 7
+    },
+    {
+      "video_id": "yVdKa8dnKiE",
+      "title": "Re 1. Introduction to Recursion | Recursion Tree | Stack Space | Strivers A2Z DSA Course",
+      "duration": 1366,
+      "playlist_position": 8
+    },
+    {
+      "video_id": "un6PLygfXrA",
+      "title": "Re 2. Problems on Recursion | Strivers A2Z DSA Course",
+      "duration": 1324,
+      "playlist_position": 9
+    },
+    {
+      "video_id": "69ZCDFy-OUo",
+      "title": "Re 3. Parameterised and Functional Recursion | Strivers A2Z DSA Course",
+      "duration": 1094,
+      "playlist_position": 10
+    },
+    {
+      "video_id": "twuC1F6gLI8",
+      "title": "Re 4. Problems on Functional Recursion | Strivers A2Z DSA Course",
+      "duration": 1188,
+      "playlist_position": 11
+    },
+    {
+      "video_id": "kvRjNm4rVBE",
+      "title": "Re 5. Multiple Recursion Calls | Problems | Strivers A2Z DSA Course",
+      "duration": 1005,
+      "playlist_position": 12
+    },
+    {
+      "video_id": "KEs5UyBJ39g",
+      "title": "Hashing | Maps | Time Complexity | Collisions | Division Rule of Hashing | Strivers A2Z DSA Course",
+      "duration": 3606,
+      "playlist_position": 13
+    },
+    {
+      "video_id": "HGk_ypEuS24",
+      "title": "Sorting - Part 1 | Selection Sort, Bubble Sort, Insertion Sort | Strivers A2Z DSA Course",
+      "duration": 2624,
+      "playlist_position": 14
+    },
+    {
+      "video_id": "ogjf7ORKfd8",
+      "title": "Merge Sort | Algorithm | Pseudocode | Dry Run | Code | Strivers A2Z DSA Course",
+      "duration": 2983,
+      "playlist_position": 15
+    },
+    {
+      "video_id": "WIrA4YexLRQ",
+      "title": "Quick Sort For Beginners | Strivers A2Z DSA Course",
+      "duration": 2117,
+      "playlist_position": 16
+    },
+    {
+      "video_id": "37E9ckMDdTk",
+      "title": "Find Second Largest Element in Array | Remove duplicates from Sorted Array | Arrays Intro Video",
+      "duration": 2606,
+      "playlist_position": 17
+    },
+    {
+      "video_id": "wvcQg43_V8U",
+      "title": "Rotate Array by K places | Union, Intersection of Sorted Arrays | Move Zeros to End | Arrays Part-2",
+      "duration": 4397,
+      "playlist_position": 18
+    },
+    {
+      "video_id": "bYWLJb3vCWY",
+      "title": "Find element that appears once | Find missing number | Max Consecutive number of 1's | Arrays Part-3",
+      "duration": 2280,
+      "playlist_position": 19
+    },
+    {
+      "video_id": "frf7qxiN2qU",
+      "title": "Longest Subarray with sum K | Brute - Better - Optimal | Generate Subarrays",
+      "duration": 2502,
+      "playlist_position": 20
+    },
+    {
+      "video_id": "UXDSeD9mN-k",
+      "title": "2 Sum Problem | 2 types of the same problem for Interviews | Brute-Better-Optimal",
+      "duration": 1100,
+      "playlist_position": 21
+    },
+    {
+      "video_id": "tp8JIuCXBaU",
+      "title": "Sort an array of 0's 1's & 2's | Intuition of Algo🔥 | C++ Java Python | Brute-Better-Optimal",
+      "duration": 1507,
+      "playlist_position": 22
+    },
+    {
+      "video_id": "nP_ns3uSh80",
+      "title": "Majority Element I | Brute-Better-Optimal | Moore's Voting Algorithm | Intuition 🔥|Brute to Optimal",
+      "duration": 1093,
+      "playlist_position": 23
+    },
+    {
+      "video_id": "AHZpyENo7k4",
+      "title": "Kadane's Algorithm | Maximum Subarray Sum | Finding and Printing",
+      "duration": 1209,
+      "playlist_position": 24
+    },
+    {
+      "video_id": "excAOvwF_Wk",
+      "title": "DP 35. Best Time to Buy and Sell Stock | DP on Stocks 🔥",
+      "duration": 551,
+      "playlist_position": 25
+    },
+    {
+      "video_id": "h4aBagy4Uok",
+      "title": "Rearrange Array Elements by Sign | 2 Varieties of same Problem",
+      "duration": 1297,
+      "playlist_position": 26
+    },
+    {
+      "video_id": "JDOXKqF60RQ",
+      "title": "Next Permutation - Intuition in Detail 🔥 | Brute to Optimal",
+      "duration": 1695,
+      "playlist_position": 27
+    },
+    {
+      "video_id": "cHrH9CQ8pmY",
+      "title": "Leaders in an Array | Brute - Optimal | Strivers A2Z DSA Course",
+      "duration": 713,
+      "playlist_position": 28
+    },
+    {
+      "video_id": "oO5uLE7EUlM",
+      "title": "Longest Consecutive Sequence | Google Interview Question | Brute Better Optimal",
+      "duration": 1391,
+      "playlist_position": 29
+    },
+    {
+      "video_id": "N0MgLvceX7M",
+      "title": "Set Matrix Zeroes | O(1) Space Approach | Brute - Better - Optimal",
+      "duration": 1807,
+      "playlist_position": 30
+    },
+    {
+      "video_id": "Z0R2u6gd3GU",
+      "title": "Rotate Matrix/Image by 90 Degrees | Brute - Optimal",
+      "duration": 1067,
+      "playlist_position": 31
+    },
+    {
+      "video_id": "3Zv-s9UUrFM",
+      "title": "Spiral Traversal of a Matrix | Spiral Matrix",
+      "duration": 993,
+      "playlist_position": 32
+    },
+    {
+      "video_id": "xvNwoz-ufXA",
+      "title": "Count Subarray sum Equals K | Brute - Better -Optimal",
+      "duration": 1449,
+      "playlist_position": 33
+    },
+    {
+      "video_id": "bR7mQgwQ_o8",
+      "title": "Pascal Triangle | Finding nCr in minimal time",
+      "duration": 1605,
+      "playlist_position": 34
+    },
+    {
+      "video_id": "vwZj1K0e9U8",
+      "title": "Majority Element II | Brute-Better-Optimal",
+      "duration": 1618,
+      "playlist_position": 35
+    },
+    {
+      "video_id": "DhFh8Kw7ymk",
+      "title": "3 Sum | Brute -  Better - Optimal with Codes",
+      "duration": 2305,
+      "playlist_position": 36
+    },
+    {
+      "video_id": "eD95WRfh81c",
+      "title": "4 Sum | Brute - Better - Optimal with Codes",
+      "duration": 1727,
+      "playlist_position": 37
+    },
+    {
+      "video_id": "eZr-6p0B7ME",
+      "title": "Number of Subarrays with xor K | Brute - Better - Optimal",
+      "duration": 1495,
+      "playlist_position": 38
+    },
+    {
+      "video_id": "IexN60k62jo",
+      "title": "Merge Overlapping Intervals | Brute, Optimal with Precise TC analysis",
+      "duration": 1355,
+      "playlist_position": 39
+    },
+    {
+      "video_id": "n7uwj04E0I4",
+      "title": "Merge Sorted Arrays Without Extra Space | 2 Optimal Solution",
+      "duration": 1967,
+      "playlist_position": 40
+    },
+    {
+      "video_id": "2D0D8HE6uak",
+      "title": "Find the Missing and Repeating Number | 4 Approaches 🔥",
+      "duration": 2544,
+      "playlist_position": 41
+    },
+    {
+      "video_id": "AseUmwVNaoY",
+      "title": "Count Inversions in an Array | Brute and Optimal",
+      "duration": 1457,
+      "playlist_position": 42
+    },
+    {
+      "video_id": "0e4bZaP3MDI",
+      "title": "Reverse Pairs | Hard Interview Question",
+      "duration": 1946,
+      "playlist_position": 43
+    },
+    {
+      "video_id": "hnswaLJvr6g",
+      "title": "Maximum Product Subarray - Best Intuitive Approach Discussed",
+      "duration": 1227,
+      "playlist_position": 44
+    },
+    {
+      "video_id": "MHf6awe89xw",
+      "title": "BS-1. Binary Search Introduction | Real Life Example | Iterative | Recursive | Overflow Cases",
+      "duration": 2007,
+      "playlist_position": 45
+    },
+    {
+      "video_id": "6zhGS79oQ4k",
+      "title": "BS-2. Implement Lower Bound and Upper Bound | Search Insert Position | Floor and Ceil",
+      "duration": 1946,
+      "playlist_position": 46
+    },
+    {
+      "video_id": "hjR1IYVx9lY",
+      "title": "BS-3. First and Last Occurrences in Array | Count occurrences in Array",
+      "duration": 1528,
+      "playlist_position": 47
+    },
+    {
+      "video_id": "5qGrJbHhqFs",
+      "title": "BS-4. Search Element in Rotated Sorted Array - I",
+      "duration": 998,
+      "playlist_position": 48
+    },
+    {
+      "video_id": "w2G2W8l__pc",
+      "title": "BS-5. Search Element in Rotated Sorted Array II",
+      "duration": 764,
+      "playlist_position": 49
+    },
+    {
+      "video_id": "nhEMDKMB44g",
+      "title": "BS-6. Minimum in Rotated Sorted Array",
+      "duration": 1028,
+      "playlist_position": 50
+    },
+    {
+      "video_id": "jtSiWTPLwd0",
+      "title": "BS-7. Find out how many times array has been rotated",
+      "duration": 301,
+      "playlist_position": 51
+    },
+    {
+      "video_id": "AZOmHuHadxQ",
+      "title": "BS-8. Single Element in Sorted Array",
+      "duration": 1336,
+      "playlist_position": 52
+    },
+    {
+      "video_id": "cXxmbemS6XM",
+      "title": "BS-9. Find Peak Element",
+      "duration": 1973,
+      "playlist_position": 53
+    },
+    {
+      "video_id": "Bsv3FPUX_BA",
+      "title": "BS-10. Finding Sqrt of a number using Binary Search",
+      "duration": 1031,
+      "playlist_position": 54
+    },
+    {
+      "video_id": "rjEJeYCasHs",
+      "title": "BS-11. Find the Nth root of an Integer",
+      "duration": 1244,
+      "playlist_position": 55
+    },
+    {
+      "video_id": "qyfekrNni90",
+      "title": "BS-12. Koko Eating Bananas",
+      "duration": 1264,
+      "playlist_position": 56
+    },
+    {
+      "video_id": "TXAuxeYBTdg",
+      "title": "BS-13. Minimum days to make M bouquets | Binary Search",
+      "duration": 1561,
+      "playlist_position": 57
+    },
+    {
+      "video_id": "UvBKTVaG6U8",
+      "title": "BS-14. Find the Smallest Divisor Given a Threshold | Binary Search",
+      "duration": 960,
+      "playlist_position": 58
+    },
+    {
+      "video_id": "MG-Ac4TAvTY",
+      "title": "BS-15. Capacity to Ship Packages within D Days",
+      "duration": 1236,
+      "playlist_position": 59
+    },
+    {
+      "video_id": "uZ0N_hZpyps",
+      "title": "BS-16. Kth Missing Positive Number | Maths + Binary Search",
+      "duration": 1372,
+      "playlist_position": 60
+    },
+    {
+      "video_id": "R_Mfw4ew-Vo",
+      "title": "BS-17. Aggressive Cows | Binary Search Hard",
+      "duration": 1604,
+      "playlist_position": 61
+    },
+    {
+      "video_id": "Z0hwjftStI4",
+      "title": "BS-18. Allocate Books or Book Allocation | Hard Binary Search",
+      "duration": 1649,
+      "playlist_position": 62
+    },
+    {
+      "video_id": "thUd_WJn6wk",
+      "title": "BS 19. Painter's Partition and Split Array - Largest Sum",
+      "duration": 680,
+      "playlist_position": 63
+    },
+    {
+      "video_id": "kMSBvlZ-_HA",
+      "title": "BS-20. Minimise Maximum Distance between Gas Stations | 3 Approaches | Heap | Binary Search",
+      "duration": 3552,
+      "playlist_position": 64
+    },
+    {
+      "video_id": "C2rRzz-JDk8",
+      "title": "BS 21: Median of two Sorted Arrays of Different Sizes | Brute and Better Approach",
+      "duration": 959,
+      "playlist_position": 65
+    },
+    {
+      "video_id": "F9c7LpRZWVQ",
+      "title": "BS-21. Median of two Sorted Arrays of Different Sizes | Binary Search Approach With Intuition",
+      "duration": 2100,
+      "playlist_position": 66
+    },
+    {
+      "video_id": "D1oDwWCq50g",
+      "title": "Bs-22. K-th element of two sorted arrays | Binary Search Approach",
+      "duration": 713,
+      "playlist_position": 67
+    },
+    {
+      "video_id": "SCz-1TtYxDI",
+      "title": "BS 23. Row with maximum number of 1s | Binary Search on 2D Arrays",
+      "duration": 618,
+      "playlist_position": 68
+    },
+    {
+      "video_id": "JXU4Akft7yk",
+      "title": "BS-24. Search in a 2D Matrix - I | Binary Search of 2D",
+      "duration": 942,
+      "playlist_position": 69
+    },
+    {
+      "video_id": "9ZbB397jU4k",
+      "title": "BS-25. Search in a 2D Matrix - II  |  Binary Search on 2D",
+      "duration": 929,
+      "playlist_position": 70
+    },
+    {
+      "video_id": "nGGp5XBzC4g",
+      "title": "BS-26. Find Peak Element-II | Binary Search",
+      "duration": 1202,
+      "playlist_position": 71
+    },
+    {
+      "video_id": "Q9wXgdxJq48",
+      "title": "BS-27. Median in a Row Wise Sorted Matrix",
+      "duration": 1393,
+      "playlist_position": 72
+    },
+    {
+      "video_id": "_ANrF3FJm7I",
+      "title": "L1. Introduction to Trees | Types of Trees",
+      "duration": 590,
+      "playlist_position": 73
+    },
+    {
+      "video_id": "ctCpP0RFDFc",
+      "title": "L2. Binary Tree Representation in C++",
+      "duration": 283,
+      "playlist_position": 74
+    },
+    {
+      "video_id": "hyLyW7rP24I",
+      "title": "L3. Binary Tree Representation in Java",
+      "duration": 252,
+      "playlist_position": 75
+    },
+    {
+      "video_id": "jmy0LaGET1I",
+      "title": "L4. Binary Tree Traversals in Binary Tree | BFS | DFS",
+      "duration": 599,
+      "playlist_position": 76
+    },
+    {
+      "video_id": "RlUu72JrOCQ",
+      "title": "L5. Preorder Traversal of Binary Tree | C++ | Java | Code Explanation",
+      "duration": 449,
+      "playlist_position": 77
+    },
+    {
+      "video_id": "Z_NEgBgbRVI",
+      "title": "L6. Inorder Traversal of Binary Tree | C++ | Java | Code Explanation",
+      "duration": 427,
+      "playlist_position": 78
+    },
+    {
+      "video_id": "COQOU6klsBg",
+      "title": "L7. Postorder Traversal of Binary Tree | C++ | Java | Code Explanation",
+      "duration": 331,
+      "playlist_position": 79
+    },
+    {
+      "video_id": "EoAsWbO7sqg",
+      "title": "L8. Level Order Traversal of Binary Tree | BFS | C++ | Java",
+      "duration": 537,
+      "playlist_position": 80
+    },
+    {
+      "video_id": "Bfqd8BsPVuw",
+      "title": "L9. Iterative Preorder Traversal in Binary Tree | C++ | Java | Stack",
+      "duration": 410,
+      "playlist_position": 81
+    },
+    {
+      "video_id": "lxTGsVXjwvM",
+      "title": "L10. iterative Inorder Traversal in Binary Tree | C++ | Java | Stack",
+      "duration": 674,
+      "playlist_position": 82
+    },
+    {
+      "video_id": "2YBhNLodD8Q",
+      "title": "L11. Iterative Postorder Traversal using 2 Stack | C++ | Java | Binary Tree",
+      "duration": 249,
+      "playlist_position": 83
+    },
+    {
+      "video_id": "NzIGLLwZBS8",
+      "title": "L12. Iterative Postorder Traversal using 1 Stack | C++ | Java | Binary Trees",
+      "duration": 753,
+      "playlist_position": 84
+    },
+    {
+      "video_id": "ySp2epYvgTE",
+      "title": "L13. Preorder Inorder Postorder Traversals in One Traversal | C++ | Java | Stack | Binary Trees",
+      "duration": 657,
+      "playlist_position": 85
+    },
+    {
+      "video_id": "eD3tmO66aBA",
+      "title": "L14. Maximum Depth in Binary Tree | Height of Binary Tree | C++ | Java",
+      "duration": 485,
+      "playlist_position": 86
+    },
+    {
+      "video_id": "Yt50Jfbd8Po",
+      "title": "L15. Check for Balanced Binary Tree | C++ | Java",
+      "duration": 750,
+      "playlist_position": 87
+    },
+    {
+      "video_id": "Rezetez59Nk",
+      "title": "L16. Diameter of Binary Tree | C++ | Java",
+      "duration": 827,
+      "playlist_position": 88
+    },
+    {
+      "video_id": "WszrfSwMz58",
+      "title": "L17. Maximum Path Sum in Binary Tree | C++ | Java",
+      "duration": 1070,
+      "playlist_position": 89
+    },
+    {
+      "video_id": "BhuvF_-PWS0",
+      "title": "L18. Check it two trees are Identical or Not | C++ | Java",
+      "duration": 258,
+      "playlist_position": 90
+    },
+    {
+      "video_id": "3OXWEdlIGl4",
+      "title": "L19. Zig-Zag or Spiral Traversal in Binary Tree | C++ | Java",
+      "duration": 501,
+      "playlist_position": 91
+    },
+    {
+      "video_id": "0ca1nvR0be4",
+      "title": "L20. Boundary Traversal in Binary Tree | C++ | Java",
+      "duration": 587,
+      "playlist_position": 92
+    },
+    {
+      "video_id": "q_a6lpbKJdw",
+      "title": "L21. Vertical Order Traversal of Binary Tree | C++ | Java",
+      "duration": 1133,
+      "playlist_position": 93
+    },
+    {
+      "video_id": "Et9OCDNvJ78",
+      "title": "L22. Top View of Binary Tree | C++ | Java",
+      "duration": 630,
+      "playlist_position": 94
+    },
+    {
+      "video_id": "0FtVY6I4pB8",
+      "title": "L23. Bottom View of Binary Tree | C++ | Java",
+      "duration": 793,
+      "playlist_position": 95
+    },
+    {
+      "video_id": "KV4mRzTjlAk",
+      "title": "L24. Right/Left View of Binary Tree | C++ | Java",
+      "duration": 808,
+      "playlist_position": 96
+    },
+    {
+      "video_id": "nKggNAiEpBE",
+      "title": "L25. Check for Symmetrical Binary Trees | C++ | Java",
+      "duration": 560,
+      "playlist_position": 97
+    },
+    {
+      "video_id": "fmflMqVOC7k",
+      "title": "L26. Print Root to Node Path in Binary Tree | C++ | Java",
+      "duration": 660,
+      "playlist_position": 98
+    },
+    {
+      "video_id": "_-QHfMDde90",
+      "title": "L27. Lowest Common Ancestor in Binary Tree | LCA | C++ | Java",
+      "duration": 849,
+      "playlist_position": 99
+    },
+    {
+      "video_id": "ZbybYvcVLks",
+      "title": "L28. Maximum Width of Binary Tree | C++ | Java",
+      "duration": 1361,
+      "playlist_position": 100
+    },
+    {
+      "video_id": "fnmisPM6cVo",
+      "title": "L29. Children Sum Property in Binary Tree | O(N) Approach | C++ | Java",
+      "duration": 973,
+      "playlist_position": 101
+    },
+    {
+      "video_id": "i9ORlEy6EsI",
+      "title": "L30. Print all the Nodes at a distance of K in Binary Tree | C++ | Java",
+      "duration": 1062,
+      "playlist_position": 102
+    },
+    {
+      "video_id": "2r5wLmQfD6g",
+      "title": "L31. Minimum time taken to BURN the Binary Tree from a Node | C++ | Java",
+      "duration": 1104,
+      "playlist_position": 103
+    },
+    {
+      "video_id": "u-yWemKGWO0",
+      "title": "L32. Count total Nodes in a COMPLETE Binary Tree | O(Log^2 N) Approach | C++ | Java",
+      "duration": 973,
+      "playlist_position": 104
+    },
+    {
+      "video_id": "9GMECGQgWrQ",
+      "title": "L33. Requirements needed to construct a Unique Binary Tree | Theory",
+      "duration": 521,
+      "playlist_position": 105
+    },
+    {
+      "video_id": "aZNaLrVebKQ",
+      "title": "L34. Construct a Binary Tree from Preorder and Inorder Traversal | C++ | Java",
+      "duration": 1132,
+      "playlist_position": 106
+    },
+    {
+      "video_id": "LgLRTaEMRVc",
+      "title": "L35. Construct the Binary Tree from Postorder and Inorder Traversal | C++ | Java",
+      "duration": 1186,
+      "playlist_position": 107
+    },
+    {
+      "video_id": "-YbXySKJsX8",
+      "title": "L36. Serialize and De-serialize Binary Tree | C++ | Java",
+      "duration": 1038,
+      "playlist_position": 108
+    },
+    {
+      "video_id": "80Zug6D1_r4",
+      "title": "L37. Morris Traversal | Preorder | Inorder | C++ | Java",
+      "duration": 1430,
+      "playlist_position": 109
+    },
+    {
+      "video_id": "sWf7k1x9XR4",
+      "title": "L38. Flatten a Binary Tree to Linked List | 3 Approaches | C++ | Java",
+      "duration": 1311,
+      "playlist_position": 110
+    },
+    {
+      "video_id": "p7-9UvDQZ3w",
+      "title": "L39. Introduction to Binary Search Tree | BST",
+      "duration": 534,
+      "playlist_position": 111
+    },
+    {
+      "video_id": "KcNt6v_56cc",
+      "title": "L40. Search in a Binary Search Tree | BST | C++ | Java",
+      "duration": 393,
+      "playlist_position": 112
+    },
+    {
+      "video_id": "KSsk8AhdOZA",
+      "title": "L41. Ceil in a Binary Search Tree | BST | C++ | Java",
+      "duration": 336,
+      "playlist_position": 113
+    },
+    {
+      "video_id": "xm_W1ub-K-w",
+      "title": "L42. Floor in a Binary Search Tree | BST | C++ | Java",
+      "duration": 300,
+      "playlist_position": 114
+    },
+    {
+      "video_id": "FiFiNvM29ps",
+      "title": "L43. Insert a given Node in Binary Search Tree | BST | C++ | Java",
+      "duration": 498,
+      "playlist_position": 115
+    },
+    {
+      "video_id": "kouxiP_H5WE",
+      "title": "L44. Delete a Node in Binary Search Tree | BST | C++ | Java",
+      "duration": 948,
+      "playlist_position": 116
+    },
+    {
+      "video_id": "9TJYWh0adfk",
+      "title": "L45. K-th Smallest/Largest Element in BST",
+      "duration": 507,
+      "playlist_position": 117
+    },
+    {
+      "video_id": "f-sj7I5oXEI",
+      "title": "L46. Check if a tree is a BST or BT | Validate a BST",
+      "duration": 579,
+      "playlist_position": 118
+    },
+    {
+      "video_id": "cX_kPV_foZc",
+      "title": "L47. LCA in Binary Search Tree",
+      "duration": 486,
+      "playlist_position": 119
+    },
+    {
+      "video_id": "UmJT3j26t1I",
+      "title": "L48. Construct a BST from a preorder traversal | 3 Methods",
+      "duration": 992,
+      "playlist_position": 120
+    },
+    {
+      "video_id": "SXKAD2svfmI",
+      "title": "L49. Inorder Successor/Predecessor in BST | 3 Methods",
+      "duration": 647,
+      "playlist_position": 121
+    },
+    {
+      "video_id": "D2jMcmxU4bs",
+      "title": "L50. Binary Search Tree Iterator | BST | O(H) Space",
+      "duration": 840,
+      "playlist_position": 122
+    },
+    {
+      "video_id": "ssL3sHwPeb4",
+      "title": "L51. Two Sum In BST | Check if there exists a pair with Sum K",
+      "duration": 906,
+      "playlist_position": 123
+    },
+    {
+      "video_id": "ZWGW7FminDM",
+      "title": "L52. Recover BST | Correct BST with two nodes swapped",
+      "duration": 956,
+      "playlist_position": 124
+    },
+    {
+      "video_id": "X0oXMdtUDwo",
+      "title": "L53. Largest BST in Binary Tree",
+      "duration": 1047,
+      "playlist_position": 125
+    },
+    {
+      "video_id": "M3_pLsDdeuU",
+      "title": "G-1. Introduction to Graph | Types | Different Conventions Used",
+      "duration": 823,
+      "playlist_position": 126
+    },
+    {
+      "video_id": "3oI-34aPMWM",
+      "title": "G-2. Graph Representation in C++ | Two Ways to Represent",
+      "duration": 964,
+      "playlist_position": 127
+    },
+    {
+      "video_id": "OsNklbh9gYI",
+      "title": "G-3. Graph Representation in Java | Two Ways to Represent",
+      "duration": 793,
+      "playlist_position": 128
+    },
+    {
+      "video_id": "lea-Wl_uWXY",
+      "title": "G-4. What are Connected Components ?",
+      "duration": 427,
+      "playlist_position": 129
+    },
+    {
+      "video_id": "-tgVpUgsQ5k",
+      "title": "G-5. Breadth-First Search (BFS) | C++ and Java | Traversal Technique in Graphs",
+      "duration": 1179,
+      "playlist_position": 130
+    },
+    {
+      "video_id": "Qzf1a--rhp8",
+      "title": "G-6. Depth-First Search (DFS) | C++ and Java | Traversal Technique in Graphs",
+      "duration": 1216,
+      "playlist_position": 131
+    },
+    {
+      "video_id": "ACzkVtewUYA",
+      "title": "G-7. Number of Provinces | C++ | Java | Connected Components",
+      "duration": 929,
+      "playlist_position": 132
+    },
+    {
+      "video_id": "muncqlKJrH0",
+      "title": "G-8. Number of Islands | Number of Connected Components in Matrix | C++ | Java",
+      "duration": 1504,
+      "playlist_position": 133
+    },
+    {
+      "video_id": "C-2_uSRli8o",
+      "title": "G-9. Flood Fill Algorithm | C++ | Java",
+      "duration": 1234,
+      "playlist_position": 134
+    },
+    {
+      "video_id": "yf3oUhkvqA0",
+      "title": "G-10. Rotten Oranges | C++ | Java",
+      "duration": 1350,
+      "playlist_position": 135
+    },
+    {
+      "video_id": "BPlrALf1LDU",
+      "title": "G-11. Detect a Cycle in an Undirected Graph using BFS | C++ | Java",
+      "duration": 1219,
+      "playlist_position": 136
+    },
+    {
+      "video_id": "zQ3zgFypzX4",
+      "title": "G-12. Detect a Cycle in an Undirected Graph using DFS | C++ | Java",
+      "duration": 1150,
+      "playlist_position": 137
+    },
+    {
+      "video_id": "edXdVwkYHF8",
+      "title": "G-13. Distance of nearest cell having 1 | 0/1 Matrix | C++ | Java",
+      "duration": 1221,
+      "playlist_position": 138
+    },
+    {
+      "video_id": "BtdgAys4yMk",
+      "title": "G-14. Surrounded Regions | Replace O's with X's | C++ | Java",
+      "duration": 1397,
+      "playlist_position": 139
+    },
+    {
+      "video_id": "rxKcepXQgU4",
+      "title": "G-15. Number of Enclaves | Multi-source BFS | C++ | Java",
+      "duration": 934,
+      "playlist_position": 140
+    },
+    {
+      "video_id": "7zmgQSJghpo",
+      "title": "G-16. Number of Distinct Islands | Constructive Thinking + DFS | C++ | Java",
+      "duration": 1082,
+      "playlist_position": 141
+    },
+    {
+      "video_id": "-vu34sct1g8",
+      "title": "G-17. Bipartite Graph | BFS | C++ | Java",
+      "duration": 1109,
+      "playlist_position": 142
+    },
+    {
+      "video_id": "KG5YFfR0j8A",
+      "title": "G-18. Bipartite Graph | DFS | C++ | Java",
+      "duration": 894,
+      "playlist_position": 143
+    },
+    {
+      "video_id": "9twcmtQj4DU",
+      "title": "G-19. Detect cycle in a directed graph using DFS | Java | C++",
+      "duration": 1042,
+      "playlist_position": 144
+    },
+    {
+      "video_id": "uRbJ1OF9aYM",
+      "title": "G-20. Find Eventual Safe States - DFS",
+      "duration": 1423,
+      "playlist_position": 145
+    },
+    {
+      "video_id": "5lZ0iJMrUMk",
+      "title": "G-21. Topological Sort Algorithm | DFS",
+      "duration": 810,
+      "playlist_position": 146
+    },
+    {
+      "video_id": "73sneFXuTEg",
+      "title": "G-22. Kahn's Algorithm | Topological Sort Algorithm | BFS",
+      "duration": 830,
+      "playlist_position": 147
+    },
+    {
+      "video_id": "iTBaI90lpDQ",
+      "title": "G-23. Detect a Cycle in Directed Graph | Topological Sort | Kahn's Algorithm | BFS",
+      "duration": 377,
+      "playlist_position": 148
+    },
+    {
+      "video_id": "WAOfKpxYHR8",
+      "title": "G-24. Course Schedule I and II | Pre-requisite Tasks | Topological Sort",
+      "duration": 692,
+      "playlist_position": 149
+    },
+    {
+      "video_id": "2gtg3VsDGyc",
+      "title": "G-25. Find Eventual Safe States - BFS - Topological Sort",
+      "duration": 1017,
+      "playlist_position": 150
+    },
+    {
+      "video_id": "U3N_je7tWAs",
+      "title": "G-26. Alien Dictionary - Topological Sort",
+      "duration": 1254,
+      "playlist_position": 151
+    },
+    {
+      "video_id": "ZUFQfFaU-8U",
+      "title": "G-27. Shortest Path in Directed Acyclic Graph - Topological Sort",
+      "duration": 1596,
+      "playlist_position": 152
+    },
+    {
+      "video_id": "C4gxoTaI71U",
+      "title": "G-28. Shortest Path in Undirected Graph with Unit Weights",
+      "duration": 992,
+      "playlist_position": 153
+    },
+    {
+      "video_id": "tRPda0rcf8E",
+      "title": "G-29. Word Ladder - I | Shortest Paths",
+      "duration": 1687,
+      "playlist_position": 154
+    },
+    {
+      "video_id": "DREutrv2XD0",
+      "title": "G-30. Word Ladder - 2 | Shortest Paths",
+      "duration": 1542,
+      "playlist_position": 155
+    },
+    {
+      "video_id": "AD4SFl7tu7I",
+      "title": "G-31. Word Ladder - 2 | Optimised Approach for Leetcode",
+      "duration": 1420,
+      "playlist_position": 156
+    },
+    {
+      "video_id": "V6H1qAeB-l4",
+      "title": "G-32. Dijkstra's Algorithm - Using Priority Queue - C++ and Java - Part 1",
+      "duration": 1362,
+      "playlist_position": 157
+    },
+    {
+      "video_id": "PATgNiuTP20",
+      "title": "G-33. Dijkstra's Algorithm - Using Set - Part 2",
+      "duration": 749,
+      "playlist_position": 158
+    },
+    {
+      "video_id": "3dINsjyfooY",
+      "title": "G-34. Dijkstra's Algorithm - Why PQ and not Q, Intuition, Time Complexity Derivation - Part 3",
+      "duration": 870,
+      "playlist_position": 159
+    },
+    {
+      "video_id": "rp1SMw7HSO8",
+      "title": "G-35. Print Shortest Path - Dijkstra's Algorithm",
+      "duration": 1160,
+      "playlist_position": 160
+    },
+    {
+      "video_id": "U5Mw4eyUmw4",
+      "title": "G-36. Shortest Distance in a Binary Maze",
+      "duration": 1422,
+      "playlist_position": 161
+    },
+    {
+      "video_id": "0ytpZyiZFhA",
+      "title": "G-37. Path With Minimum Effort",
+      "duration": 1470,
+      "playlist_position": 162
+    },
+    {
+      "video_id": "9XybHVqTHcQ",
+      "title": "G-38. Cheapest Flights Within K Stops",
+      "duration": 1436,
+      "playlist_position": 163
+    },
+    {
+      "video_id": "_BvEJ3VIDWw",
+      "title": "G-39. Minimum Multiplications to Reach End",
+      "duration": 1171,
+      "playlist_position": 164
+    },
+    {
+      "video_id": "_-0mx0SmYxA",
+      "title": "G-40. Number of Ways to Arrive at Destination",
+      "duration": 1446,
+      "playlist_position": 165
+    },
+    {
+      "video_id": "0vVofAhAYjc",
+      "title": "G-41. Bellman Ford Algorithm",
+      "duration": 1663,
+      "playlist_position": 166
+    },
+    {
+      "video_id": "YbY8cVwWAvw",
+      "title": "G-42. Floyd Warshall Algorithm",
+      "duration": 1813,
+      "playlist_position": 167
+    },
+    {
+      "video_id": "PwMVNSJ5SLI",
+      "title": "G-43. Find the City With the Smallest Number of Neighbours at a Threshold Distance",
+      "duration": 776,
+      "playlist_position": 168
+    },
+    {
+      "video_id": "ZSPjZuZWCME",
+      "title": "G-44. Minimum Spanning Tree - Theory",
+      "duration": 479,
+      "playlist_position": 169
+    },
+    {
+      "video_id": "mJcZjjKzeqk",
+      "title": "G-45. Prim's Algorithm - Minimum Spanning Tree - C++ and Java",
+      "duration": 1150,
+      "playlist_position": 170
+    },
+    {
+      "video_id": "aBxjDBC4M1U",
+      "title": "G-46. Disjoint Set | Union by Rank | Union by Size | Path Compression",
+      "duration": 2535,
+      "playlist_position": 171
+    },
+    {
+      "video_id": "DMnDM_sxVig",
+      "title": "G-47. Kruskal's Algorithm - Minimum Spanning Tree - C++ and Java",
+      "duration": 791,
+      "playlist_position": 172
+    },
+    {
+      "video_id": "ZGr5nX-Gi6Y",
+      "title": "G-48. Number of Provinces - Disjoint Set",
+      "duration": 483,
+      "playlist_position": 173
+    },
+    {
+      "video_id": "FYrl7iz9_ZU",
+      "title": "G-49. Number of Operations to Make Network Connected - DSU",
+      "duration": 888,
+      "playlist_position": 174
+    },
+    {
+      "video_id": "FMwpt_aQOGw",
+      "title": "G-50. Accounts Merge - DSU",
+      "duration": 1321,
+      "playlist_position": 175
+    },
+    {
+      "video_id": "Rn6B-Q4SNyA",
+      "title": "G-51. Number of Islands - II - Online Queries - DSU",
+      "duration": 1532,
+      "playlist_position": 176
+    },
+    {
+      "video_id": "lgiz0Oup6gM",
+      "title": "G-52. Making a Large Island - DSU",
+      "duration": 1576,
+      "playlist_position": 177
+    },
+    {
+      "video_id": "OwMNX8SPavM",
+      "title": "G-53. Most Stones Removed with Same Row or Column - DSU",
+      "duration": 1431,
+      "playlist_position": 178
+    },
+    {
+      "video_id": "R6uoSjZ2imo",
+      "title": "G-54. Strongly Connected Components - Kosaraju's Algorithm",
+      "duration": 1364,
+      "playlist_position": 179
+    },
+    {
+      "video_id": "qrAub5z8FeA",
+      "title": "G-55. Bridges in Graph - Using Tarjan's Algorithm of time in and low time",
+      "duration": 1405,
+      "playlist_position": 180
+    },
+    {
+      "video_id": "j1QDfU21iZk",
+      "title": "G-56. Articulation Point in Graph",
+      "duration": 1320,
+      "playlist_position": 181
+    },
+    {
+      "video_id": "tyB0ztf0DNY",
+      "title": "DP 1. Introduction to Dynamic Programming | Memoization | Tabulation | Space Optimization Techniques",
+      "duration": 2031,
+      "playlist_position": 182
+    },
+    {
+      "video_id": "mLfjzJsN8us",
+      "title": "DP 2. Climbing Stairs | Learn How to Write 1D Recurrence Relations",
+      "duration": 797,
+      "playlist_position": 183
+    },
+    {
+      "video_id": "EgG3jsGoPvQ",
+      "title": "DP 3. Frog Jump | Dynamic Programming | Learn to write 1D DP",
+      "duration": 2330,
+      "playlist_position": 184
+    },
+    {
+      "video_id": "Kmh3rhyEtB8",
+      "title": "DP 4. Frog Jump with K Distance | Lecture 3 Follow Up Question",
+      "duration": 1055,
+      "playlist_position": 185
+    },
+    {
+      "video_id": "GrMBfJNk_NY",
+      "title": "DP 5. Maximum Sum of Non-Adjacent Elements | House Robber | 1-D | DP on Subsequences",
+      "duration": 1943,
+      "playlist_position": 186
+    },
+    {
+      "video_id": "3WaxQMELSkw",
+      "title": "DP 6. House Robber 2 | 1D DP | DP on Subsequences",
+      "duration": 590,
+      "playlist_position": 187
+    },
+    {
+      "video_id": "AE39gJYuRog",
+      "title": "DP 7. Ninja's Training | MUST WATCH for 2D CONCEPTS 🔥 | Vacation | Atcoder | 2D DP |",
+      "duration": 3138,
+      "playlist_position": 188
+    },
+    {
+      "video_id": "sdE0A2Oxofw",
+      "title": "DP 8. Grid Unique Paths | Learn Everything about DP on Grids | ALL TECHNIQUES 🔥",
+      "duration": 2909,
+      "playlist_position": 189
+    },
+    {
+      "video_id": "TmhpgXScLyY",
+      "title": "DP 9. Unique Paths 2 | DP on Grid with Maze Obstacles",
+      "duration": 779,
+      "playlist_position": 190
+    },
+    {
+      "video_id": "_rgTlyky1uQ",
+      "title": "DP 10. Minimum Path Sum in Grid | Asked to me In Microsoft Internship Interview | DP on GRIDS",
+      "duration": 1427,
+      "playlist_position": 191
+    },
+    {
+      "video_id": "SrP-PiLSYC0",
+      "title": "DP 11. Triangle | Fixed Starting Point and Variable Ending Point | DP on GRIDS",
+      "duration": 2079,
+      "playlist_position": 192
+    },
+    {
+      "video_id": "N_aJ5qQbYA0",
+      "title": "DP 12. Minimum/Maximum Falling Path Sum | Variable Starting and Ending Points | DP on Grids",
+      "duration": 2558,
+      "playlist_position": 193
+    },
+    {
+      "video_id": "QGfn7JeXK54",
+      "title": "DP 13. Cherry Pickup II | 3D DP Made Easy | DP On Grids",
+      "duration": 2603,
+      "playlist_position": 194
+    },
+    {
+      "video_id": "fWX9xDmIzRI",
+      "title": "DP 14. Subset Sum Equals to Target | Identify DP on Subsequences and Ways to Solve them",
+      "duration": 2329,
+      "playlist_position": 195
+    },
+    {
+      "video_id": "7win3dcgo3k",
+      "title": "DP 15. Partition Equal Subset Sum | DP on Subsequences",
+      "duration": 583,
+      "playlist_position": 196
+    },
+    {
+      "video_id": "GS_OqZb2CWc",
+      "title": "Dp 16. Partition A Set Into Two Subsets With Minimum Absolute Sum Difference | DP on Subsequences",
+      "duration": 1790,
+      "playlist_position": 197
+    },
+    {
+      "video_id": "ZHyb-A2Mte4",
+      "title": "DP 17. Counts Subsets with Sum K | Dp on Subsequences",
+      "duration": 2217,
+      "playlist_position": 198
+    },
+    {
+      "video_id": "zoilQD1kYSg",
+      "title": "DP 18. Count Partitions With Given Difference | Dp on Subsequences",
+      "duration": 1080,
+      "playlist_position": 199
+    },
+    {
+      "video_id": "GqOmJHQZivw",
+      "title": "DP 19. 0/1 Knapsack | Recursion to Single Array Space Optimised Approach | DP on Subsequences",
+      "duration": 2479,
+      "playlist_position": 200
+    },
+    {
+      "video_id": "myPeWb3Y68A",
+      "title": "DP 20. Minimum Coins | DP on Subsequences | Infinite Supplies Pattern",
+      "duration": 2055,
+      "playlist_position": 201
+    },
+    {
+      "video_id": "b3GD8263-PQ",
+      "title": "DP 21. Target Sum | DP on Subsequences",
+      "duration": 544,
+      "playlist_position": 202
+    },
+    {
+      "video_id": "HgyouUi11zk",
+      "title": "DP 22. Coin Change 2 | Infinite Supply Problems  | DP on Subsequences",
+      "duration": 1337,
+      "playlist_position": 203
+    },
+    {
+      "video_id": "OgvOZ6OrJoY",
+      "title": "DP 23. Unbounded Knapsack | 1-D Array Space Optimised Approach",
+      "duration": 1374,
+      "playlist_position": 204
+    },
+    {
+      "video_id": "mO8XpGoJwuo",
+      "title": "DP 24. Rod Cutting Problem | 1D Array Space Optimised Approach",
+      "duration": 1374,
+      "playlist_position": 205
+    },
+    {
+      "video_id": "NPZn9jBrX8U",
+      "title": "Dp 25. Longest Common Subsequence | Top Down | Bottom-Up | Space Optimised | DP on Strings",
+      "duration": 2829,
+      "playlist_position": 206
+    },
+    {
+      "video_id": "-zI4mrF2Pb4",
+      "title": "DP 26. Print Longest Common Subsequence | Dp on Strings",
+      "duration": 1015,
+      "playlist_position": 207
+    },
+    {
+      "video_id": "_wP9mWNPL5w",
+      "title": "DP 27. Longest Common Substring | DP on Strings 🔥",
+      "duration": 841,
+      "playlist_position": 208
+    },
+    {
+      "video_id": "6i_T5kkfv4A",
+      "title": "DP 28. Longest Palindromic Subsequence",
+      "duration": 578,
+      "playlist_position": 209
+    },
+    {
+      "video_id": "xPBLEj41rFU",
+      "title": "DP 29. Minimum Insertions to Make String Palindrome",
+      "duration": 720,
+      "playlist_position": 210
+    },
+    {
+      "video_id": "yMnH0jrir0Q",
+      "title": "DP 30. Minimum Insertions/Deletions to Convert String A to String B",
+      "duration": 450,
+      "playlist_position": 211
+    },
+    {
+      "video_id": "xElxAuBcvsU",
+      "title": "DP 31. Shortest Common Supersequence | DP on Strings",
+      "duration": 1604,
+      "playlist_position": 212
+    },
+    {
+      "video_id": "nVG7eTiD2bY",
+      "title": "DP 32. Distinct Subsequences | 1D Array Optimisation Technique 🔥",
+      "duration": 2415,
+      "playlist_position": 213
+    },
+    {
+      "video_id": "fJaKO8FbDdo",
+      "title": "DP 33. Edit Distance | Recursive to 1D Array Optimised Solution 🔥",
+      "duration": 2259,
+      "playlist_position": 214
+    },
+    {
+      "video_id": "ZmlQ3vgAOMo",
+      "title": "DP 34. Wildcard Matching | Recursive to 1D Array Optimisation 🔥",
+      "duration": 2632,
+      "playlist_position": 215
+    },
+    {
+      "video_id": "nGJmxkUJQGs",
+      "title": "DP 36. Buy and Sell Stock - II | Recursion to Space Optimisation",
+      "duration": 2134,
+      "playlist_position": 216
+    },
+    {
+      "video_id": "-uQGzhYj8BQ",
+      "title": "DP 37. Buy and Sell Stocks III | Recursion to Space Optimisation",
+      "duration": 1910,
+      "playlist_position": 217
+    },
+    {
+      "video_id": "IV1dHbk5CDc",
+      "title": "DP 38. Buy and Stock Sell IV | Recursion to Space Optimisation",
+      "duration": 744,
+      "playlist_position": 218
+    },
+    {
+      "video_id": "IGIe46xw3YY",
+      "title": "DP 39. Buy and Sell Stocks With Cooldown | Recursion to Space Optimisation",
+      "duration": 921,
+      "playlist_position": 219
+    },
+    {
+      "video_id": "k4eK-vEmnKg",
+      "title": "DP 40. Buy and Sell Stocks With Transaction Fee | Recursion to Space Optimisation",
+      "duration": 440,
+      "playlist_position": 220
+    },
+    {
+      "video_id": "ekcwMsSIzVc",
+      "title": "DP 41. Longest Increasing Subsequence | Memoization",
+      "duration": 1475,
+      "playlist_position": 221
+    },
+    {
+      "video_id": "IFfYfonAFGc",
+      "title": "DP 42. Printing Longest Increasing Subsequence | Tabulation | Algorithm",
+      "duration": 1557,
+      "playlist_position": 222
+    },
+    {
+      "video_id": "on2hvxBXJH4",
+      "title": "DP 43. Longest Increasing Subsequence | Binary Search | Intuition",
+      "duration": 987,
+      "playlist_position": 223
+    },
+    {
+      "video_id": "gDuZwBW9VvM",
+      "title": "DP 44. Largest Divisible Subset | Longest Increasing Subsequence",
+      "duration": 879,
+      "playlist_position": 224
+    },
+    {
+      "video_id": "YY8iBaYcc4g",
+      "title": "DP 45. Longest String Chain | Longest Increasing Subsequence | LIS",
+      "duration": 1017,
+      "playlist_position": 225
+    },
+    {
+      "video_id": "y4vN0WNdrlg",
+      "title": "DP 46. Longest Bitonic Subsequence | LIS",
+      "duration": 832,
+      "playlist_position": 226
+    },
+    {
+      "video_id": "cKVl1TFdNXg",
+      "title": "DP 47. Number of Longest Increasing Subsequences",
+      "duration": 1246,
+      "playlist_position": 227
+    },
+    {
+      "video_id": "vRVfmbCFW7Y",
+      "title": "DP 48. Matrix Chain Multiplication | MCM | Partition DP Starts 🔥",
+      "duration": 3221,
+      "playlist_position": 228
+    },
+    {
+      "video_id": "pDCXsbAw5Cg",
+      "title": "DP 49. Matrix Chain Multiplication | Bottom-Up | Tabulation",
+      "duration": 548,
+      "playlist_position": 229
+    },
+    {
+      "video_id": "xwomavsC86c",
+      "title": "DP 50. Minimum Cost to Cut the Stick",
+      "duration": 1802,
+      "playlist_position": 230
+    },
+    {
+      "video_id": "Yz4LlDSlkns",
+      "title": "DP 51. Burst Balloons | Partition DP | Interactive G-Meet Session Update",
+      "duration": 2040,
+      "playlist_position": 231
+    },
+    {
+      "video_id": "MM7fXopgyjw",
+      "title": "DP 52. Evaluate Boolean Expression to True | Partition DP",
+      "duration": 2095,
+      "playlist_position": 232
+    },
+    {
+      "video_id": "_H8V5hJUGd0",
+      "title": "DP 53. Palindrome Partitioning - II | Front Partition 🔥",
+      "duration": 1397,
+      "playlist_position": 233
+    },
+    {
+      "video_id": "PhWWJmaKfMc",
+      "title": "DP 54. Partition Array for Maximum Sum | Front Partition 🔥",
+      "duration": 1299,
+      "playlist_position": 234
+    },
+    {
+      "video_id": "tOylVCugy9k",
+      "title": "DP 55. Maximum Rectangle Area with all 1's | DP on Rectangles",
+      "duration": 664,
+      "playlist_position": 235
+    },
+    {
+      "video_id": "auS1fynpnjo",
+      "title": "DP 56. Count Square Submatrices with All Ones | DP on Rectangles 🔥",
+      "duration": 959,
+      "playlist_position": 236
+    },
+    {
+      "video_id": "Nq7ok-OyEpg",
+      "title": "L1. Introduction to LinkedList | Traversal | Length | Search an Element",
+      "duration": 2717,
+      "playlist_position": 237
+    },
+    {
+      "video_id": "VaECK03Dz-g",
+      "title": "L2. Deletion and Insertion in LL | 8 Problems",
+      "duration": 3390,
+      "playlist_position": 238
+    },
+    {
+      "video_id": "0eKMU10uEDI",
+      "title": "L3. Introduction to Doubly LinkedList | Insertions and Deletions",
+      "duration": 3847,
+      "playlist_position": 239
+    },
+    {
+      "video_id": "u3WUW2qe6ww",
+      "title": "L4. Reverse a DLL | Multiple Approaches",
+      "duration": 1110,
+      "playlist_position": 240
+    },
+    {
+      "video_id": "XmRrGzR6udg",
+      "title": "L5. Add 2 numbers in LinkedList | Dummy Node Approach",
+      "duration": 888,
+      "playlist_position": 241
+    },
+    {
+      "video_id": "qf6qp7GzD5Q",
+      "title": "L6. Odd Even Linked List | Multiple Approaches",
+      "duration": 1445,
+      "playlist_position": 242
+    },
+    {
+      "video_id": "gRII7LhdJWc",
+      "title": "L7. Sort a LinkedList of 0's, 1's and 2's | Multiple Approaches",
+      "duration": 1403,
+      "playlist_position": 243
+    },
+    {
+      "video_id": "3kMKYQ2wNIU",
+      "title": "L8. Remove Nth Node from the end of the LinkedList | Multiple Approaches",
+      "duration": 983,
+      "playlist_position": 244
+    },
+    {
+      "video_id": "D2vI2DNJGd8",
+      "title": "L9. Reverse a LinkedList | Iterative and Recursive",
+      "duration": 1962,
+      "playlist_position": 245
+    },
+    {
+      "video_id": "lRY_G-u_8jk",
+      "title": "L10. Check if a LinkedList is Palindrome or Not | Multiple Approaches",
+      "duration": 1202,
+      "playlist_position": 246
+    },
+    {
+      "video_id": "aXQWhbvT3w0",
+      "title": "L11. Add 1 to a number represented by LinkedList",
+      "duration": 1528,
+      "playlist_position": 247
+    },
+    {
+      "video_id": "0DYoPz2Tpt4",
+      "title": "L12. Find the intersection point of Y LinkedList",
+      "duration": 1925,
+      "playlist_position": 248
+    },
+    {
+      "video_id": "7LjQ57RqgEc",
+      "title": "L13. Find the middle element of the LinkedList | Multiple Approaches",
+      "duration": 877,
+      "playlist_position": 249
+    },
+    {
+      "video_id": "wiOo4DC5GGA",
+      "title": "L14. Detect a loop or cycle in LinkedList | With proof and Intuition",
+      "duration": 1226,
+      "playlist_position": 250
+    },
+    {
+      "video_id": "I4g1qbkTPus",
+      "title": "L15. Find the length of the Loop in LinkedList",
+      "duration": 841,
+      "playlist_position": 251
+    },
+    {
+      "video_id": "ePpV-_pfOeI",
+      "title": "L16. Delete the middle node of the LinkedList",
+      "duration": 996,
+      "playlist_position": 252
+    },
+    {
+      "video_id": "2Kd0KKmmHFc",
+      "title": "L17. Find the starting point of the Loop/Cycle in LinkedList | Multiple Approaches",
+      "duration": 1362,
+      "playlist_position": 253
+    },
+    {
+      "video_id": "Mh0NH_SD92k",
+      "title": "L18. Delete all occurrences of a Key in DLL",
+      "duration": 673,
+      "playlist_position": 254
+    },
+    {
+      "video_id": "YitR4dQsddE",
+      "title": "L19. Find all Pairs with given Sum in DLL",
+      "duration": 854,
+      "playlist_position": 255
+    },
+    {
+      "video_id": "YJKVTnOJXSY",
+      "title": "L20. Remove duplicates from sorted DLL",
+      "duration": 773,
+      "playlist_position": 256
+    },
+    {
+      "video_id": "lIar1skcQYI",
+      "title": "L21. Reverse Nodes in K Group Size of LinkedList",
+      "duration": 1471,
+      "playlist_position": 257
+    },
+    {
+      "video_id": "uT7YI7XbTY8",
+      "title": "L22. Rotate a LinkedList",
+      "duration": 730,
+      "playlist_position": 258
+    },
+    {
+      "video_id": "jXu-H7XuClE",
+      "title": "L23. Merge two sorted Linked Lists",
+      "duration": 1135,
+      "playlist_position": 259
+    },
+    {
+      "video_id": "ykelywHJWLg",
+      "title": "L24. Flattening a LinkedList | Multiple Approaches with Dry Run",
+      "duration": 1978,
+      "playlist_position": 260
+    },
+    {
+      "video_id": "1zktEppsdig",
+      "title": "L25. Merge K Sorted Lists | Multiple Approaches",
+      "duration": 1802,
+      "playlist_position": 261
+    },
+    {
+      "video_id": "8ocB7a_c-Cc",
+      "title": "L26. Sort a Linked List | Merge Sort and Brute Force",
+      "duration": 1331,
+      "playlist_position": 262
+    },
+    {
+      "video_id": "q570bKdrnlw",
+      "title": "L27. Clone a LinkedList with Next and Random Pointers | Copy List with Random Pointers",
+      "duration": 1980,
+      "playlist_position": 263
+    },
+    {
+      "video_id": "mG3KLugbOdc",
+      "title": "L28. Design a Browser History | LinkedList Implementation",
+      "duration": 878,
+      "playlist_position": 264
+    },
+    {
+      "video_id": "Ae_Ag_saG9s",
+      "title": "L2. Print all Divisors of a Number | Maths Playlist",
+      "duration": 550,
+      "playlist_position": 265
+    },
+    {
+      "video_id": "MJcckSfoYdI",
+      "title": "L3. Check if a Number if Prime or not | Maths Playlist",
+      "duration": 430,
+      "playlist_position": 266
+    },
+    {
+      "video_id": "LT7XhVdeRyg",
+      "title": "L4. Print all prime factors of a Number | Maths Playlist",
+      "duration": 1133,
+      "playlist_position": 267
+    },
+    {
+      "video_id": "hFWckDXE-K8",
+      "title": "L5. Power Exponentiation | Maths Playlist",
+      "duration": 759,
+      "playlist_position": 268
+    },
+    {
+      "video_id": "g5Fuxn_AvSk",
+      "title": "L6. Sieve of Eratosthenes | Maths Playlist",
+      "duration": 1107,
+      "playlist_position": 269
+    },
+    {
+      "video_id": "os82DjD2-MA",
+      "title": "L7. Count Prime in a range L-R | Maths Playlist",
+      "duration": 999,
+      "playlist_position": 270
+    },
+    {
+      "video_id": "glKWkmKFlMw",
+      "title": "L8. Smallest Prime Factor (SPF) | Prime Factorisation | Query Based Problem | Maths Playlist",
+      "duration": 1017,
+      "playlist_position": 271
+    },
+    {
+      "video_id": "9kdHxplyl5I",
+      "title": "L1. Introduction to Sliding Window and 2 Pointers | Templates | Patterns",
+      "duration": 2215,
+      "playlist_position": 272
+    },
+    {
+      "video_id": "pBWCOCS636U",
+      "title": "L2. Maximum Points You Can Obtain from Cards | 2 Pointers and Sliding Window Playlist",
+      "duration": 673,
+      "playlist_position": 273
+    },
+    {
+      "video_id": "-zSxTJkcdAo",
+      "title": "L3. Longest Substring Without Repeating Characters | 2 Pointers and Sliding Window Playlist",
+      "duration": 1389,
+      "playlist_position": 274
+    },
+    {
+      "video_id": "3E4JBHSLpYk",
+      "title": "L4. Max Consecutive Ones III | 2 Pointers and Sliding Window Playlist",
+      "duration": 1798,
+      "playlist_position": 275
+    },
+    {
+      "video_id": "e3bs0uA1NhQ",
+      "title": "L5. Fruit Into Baskets | 2 Pointers and Sliding Window Playlist",
+      "duration": 1802,
+      "playlist_position": 276
+    },
+    {
+      "video_id": "teM9ZsVRQyc",
+      "title": "L6. Longest Substring With At Most K Distinct Characters | 2 Pointers and Sliding Window Playlist",
+      "duration": 1292,
+      "playlist_position": 277
+    },
+    {
+      "video_id": "xtqN4qlgr8s",
+      "title": "L7. Number of Substrings Containing All Three Characters | 2 Pointers and Sliding Window Playlist",
+      "duration": 1180,
+      "playlist_position": 278
+    },
+    {
+      "video_id": "_eNhaDCr6P0",
+      "title": "L8. Longest Repeating Character Replacement | 2 Pointers and Sliding Window Playlist",
+      "duration": 1521,
+      "playlist_position": 279
+    },
+    {
+      "video_id": "XnMdNUkX6VM",
+      "title": "L9. Binary Subarrays With Sum | 2 Pointers and Sliding Window Playlist",
+      "duration": 1227,
+      "playlist_position": 280
+    },
+    {
+      "video_id": "j_QOv9OT9Og",
+      "title": "L10. Count number of Nice subarrays | 2 Pointers and Sliding Window Playlist",
+      "duration": 294,
+      "playlist_position": 281
+    },
+    {
+      "video_id": "7wYGbV_LsX4",
+      "title": "L11. Subarray with k different integers | 2 Pointers and Sliding Window Playlist",
+      "duration": 1249,
+      "playlist_position": 282
+    },
+    {
+      "video_id": "WJaij9ffOIY",
+      "title": "L12. Minimum Window Substring | 2 Pointers and Sliding Window Playlist",
+      "duration": 1626,
+      "playlist_position": 283
+    },
+    {
+      "video_id": "DIX2p7vb9co",
+      "title": "L1. Assign Cookies | Greedy Algorithm Playlist",
+      "duration": 651,
+      "playlist_position": 284
+    },
+    {
+      "video_id": "3-QbX1iDbXs",
+      "title": "L3. Shortest Job First (or SJF) CPU Scheduling",
+      "duration": 440,
+      "playlist_position": 285
+    },
+    {
+      "video_id": "n_tmibEhO6Q",
+      "title": "L2. Lemonade Change | Greedy Algorithm Playlist",
+      "duration": 540,
+      "playlist_position": 286
+    },
+    {
+      "video_id": "tZAa_jJ3SwQ",
+      "title": "L4. Jump Game - I | Greedy Algorithm Playlist",
+      "duration": 653,
+      "playlist_position": 287
+    },
+    {
+      "video_id": "7SBVnw7GSTk",
+      "title": "L5. Jump Game - II | Greedy Algorithm Playlist",
+      "duration": 1005,
+      "playlist_position": 288
+    },
+    {
+      "video_id": "QbwltemZbRg",
+      "title": "L6. Job Sequencing Problem | Greedy Algorithm Playlist",
+      "duration": 967,
+      "playlist_position": 289
+    },
+    {
+      "video_id": "mKfhTotEguk",
+      "title": "L7. N Meeting in One Room | Greedy Algorithms Playlist",
+      "duration": 792,
+      "playlist_position": 290
+    },
+    {
+      "video_id": "HDHQ8lAWakY",
+      "title": "L8. Non Overlapping Intervals | Greedy Algorithms Playlist",
+      "duration": 526,
+      "playlist_position": 291
+    },
+    {
+      "video_id": "xxRE-46OCC8",
+      "title": "L9. Insert Intervals | Greedy Algorithms Playlist",
+      "duration": 796,
+      "playlist_position": 292
+    },
+    {
+      "video_id": "AsGzwR_FWok",
+      "title": "L10. Minimum number of platforms required in a railway station",
+      "duration": 1090,
+      "playlist_position": 293
+    },
+    {
+      "video_id": "cHT6sG_hUZI",
+      "title": "L11. Valid Parenthesis String | Multiple Approaches",
+      "duration": 1569,
+      "playlist_position": 294
+    },
+    {
+      "video_id": "1ibsQrnuEEg",
+      "title": "L13. Fractional Knapsack Algorithm",
+      "duration": 1121,
+      "playlist_position": 295
+    },
+    {
+      "video_id": "IIqVFvKE6RY",
+      "title": "L12. Candy | Slope Approach Intuition Based",
+      "duration": 1810,
+      "playlist_position": 296
+    },
+    {
+      "video_id": "tqQ5fTamIN4",
+      "title": "L1. Introduction to Stack and Queue | Implementation using Data Structures",
+      "duration": 3906,
+      "playlist_position": 297
+    },
+    {
+      "video_id": "xwjS0iZhw4I",
+      "title": "L2. Check for Balanced Parentheses | Stack and Queue",
+      "duration": 748,
+      "playlist_position": 298
+    },
+    {
+      "video_id": "4pIc9UBHJtk",
+      "title": "L3. Prefix, Infix, and Postfix Conversion | Stack and Queue Playlist",
+      "duration": 3047,
+      "playlist_position": 299
+    },
+    {
+      "video_id": "NdDIaH91P0g",
+      "title": "L4. Implement Min Stack | Stack and Queue Playlist",
+      "duration": 1255,
+      "playlist_position": 300
+    },
+    {
+      "video_id": "e7XQLtOQM3I",
+      "title": "L5. Next Greater Element | Stack and Queue Playlist",
+      "duration": 1105,
+      "playlist_position": 301
+    },
+    {
+      "video_id": "7PrncD7v9YQ",
+      "title": "L6. Next Greater Element - II | Stack and Queue Playlist",
+      "duration": 941,
+      "playlist_position": 302
+    },
+    {
+      "video_id": "zMdbdGJNlh4",
+      "title": "L7. Previous Smaller Element | Stack and Queue Playlist",
+      "duration": 491,
+      "playlist_position": 303
+    },
+    {
+      "video_id": "1_5VuquLbXg",
+      "title": "L8. Trapping Rainwater | 2 Approaches | Stack and Queue Playlist",
+      "duration": 1738,
+      "playlist_position": 304
+    },
+    {
+      "video_id": "v0e8p9JCgRc",
+      "title": "L9. Sum of Subarray Minimum | Stack and Queue Playlist",
+      "duration": 1415,
+      "playlist_position": 305
+    },
+    {
+      "video_id": "gIrMptNPf5M",
+      "title": "L10. Sum of subarray ranges | Stack and Queue Playlist",
+      "duration": 634,
+      "playlist_position": 306
+    },
+    {
+      "video_id": "_eYGqw_VDR4",
+      "title": "L11. Aestroid Collisions | Stack and Queue Playlist",
+      "duration": 1049,
+      "playlist_position": 307
+    },
+    {
+      "video_id": "Bzat9vgD0fs",
+      "title": "L12. Largest Rectangle in Histogram | Stack and Queue Playlist",
+      "duration": 1902,
+      "playlist_position": 308
+    },
+    {
+      "video_id": "ttVu6G7Ayik",
+      "title": "L13. Maximal Rectangle | Stack and Queue Playlist",
+      "duration": 732,
+      "playlist_position": 309
+    },
+    {
+      "video_id": "jmbuRzYPGrg",
+      "title": "L14. Remove K Digits | Stack and Queue Playlist",
+      "duration": 929,
+      "playlist_position": 310
+    },
+    {
+      "video_id": "eay-zoSRkVc",
+      "title": "L15. Stock Span Problem | Stack and Queue Playlist",
+      "duration": 1161,
+      "playlist_position": 311
+    },
+    {
+      "video_id": "NwBvene4Imo",
+      "title": "L16. Sliding Window Maximum | Stack and Queue Playlist",
+      "duration": 1198,
+      "playlist_position": 312
+    },
+    {
+      "video_id": "cEadsbTeze4",
+      "title": "L17. The Celebrity Problem | Stack and Queue Playlist",
+      "duration": 977,
+      "playlist_position": 313
+    },
+    {
+      "video_id": "z9bJUPxzFOw",
+      "title": "L18. Implement LRU Cache",
+      "duration": 1496,
+      "playlist_position": 314
+    },
+    {
+      "video_id": "mzqHlAW7jeE",
+      "title": "Implement LFU cache in C++/Java  | Leetcode(Hard)",
+      "duration": 1064,
+      "playlist_position": 315
+    }
+  ],
+  "verified_at": "2026-10-15T19:28:18.323363+00:00",
+  "channel": "take U forward",
+  "provenance": "Public YouTube playlist metadata; titles and order only. No lecture transcripts or inferred timestamps."
+}

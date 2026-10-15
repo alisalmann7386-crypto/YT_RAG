@@ -22,6 +22,7 @@ class Transcript(BaseModel):
     language: str = "en"
     source: Literal["captions", "whisper", "import"] = "import"
     duration: float = Field(default=0, ge=0, allow_inf_nan=False)
+    playlist_position: int | None = Field(default=None, ge=1)
     segments: list[Segment] = Field(min_length=1)
 
 
@@ -36,6 +37,8 @@ class Chunk(BaseModel):
     language: str = "en"
     source: str = "original study note"
     topic: str = "DSA"
+    playlist_position: int | None = Field(default=None, ge=1)
+    segments: list[Segment] = Field(default_factory=list)
 
 
 class HistoryTurn(BaseModel):
@@ -48,7 +51,7 @@ class AskRequest(BaseModel):
     question: str = Field(min_length=1, max_length=1200)
     top_k: int = Field(default=6, ge=1, le=10)
     video_id: str | None = Field(default=None, pattern=r"^[A-Za-z0-9_-]{11}$")
-    mode: Literal["explain", "hint", "compare", "complexity", "code"] = "explain"
+    mode: Literal["explain", "locate", "summary", "hint", "compare", "complexity", "code"] = "explain"
     language: Literal["English", "Hinglish", "Hindi"] = "English"
     code_language: Literal["Python", "C++", "Java"] = "Python"
     history: list[HistoryTurn] = Field(default_factory=list, max_length=6)

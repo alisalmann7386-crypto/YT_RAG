@@ -25,7 +25,8 @@ def chunk_transcript(transcript: Transcript, window: int = 75, overlap: int = 15
             chunks.append(Chunk(id=hashlib.sha256(identity.encode()).hexdigest()[:32],
                 title=transcript.title, text=text, kind="lecture", video_id=transcript.video_id,
                 start=batch[0].start, end=batch[-1].end, language=transcript.language,
-                source=transcript.source))
+                source=transcript.source, playlist_position=transcript.playlist_position,
+                segments=batch))
         if j == len(segments):
             break
         boundary = batch[-1].end - overlap

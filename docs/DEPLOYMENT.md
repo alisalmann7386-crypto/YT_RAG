@@ -10,7 +10,7 @@ After `index.sqlite3` is prepared and placed on the host, `/api/search` and evid
 
 Opening an embedded lecture still streams from YouTube and depends on video availability, embedding permission, and the viewer's connection. A deleted/blocked clip may not play even though its previously indexed text remains searchable. This is separate from retrieval.
 
-An empty host cannot recover a missing index by querying YouTube. Transfer your prepared index using the methods below. The code-only demo has original notes, not full A2Z lecture data.
+The repository also ships verified lecture titles, order and links. Metadata-only matches work immediately and explicitly omit in-video timestamps; they are not transcript evidence. An empty host cannot recover a missing caption index by querying YouTube. Transfer your prepared index using the methods below. The code-only demo has original notes, not full A2Z lecture data.
 
 ## Same Wi-Fi / LAN
 
@@ -49,6 +49,9 @@ Connect the repository as a Python web service, or use `render.yaml`:
 Add `LLM_PROVIDER=groq`, `GROQ_API_KEY`, and `LLM_MODEL` in hosting secrets for explanations. Start with BM25 for low memory. The Blueprint initially serves the notes demo; a successful deployment does not mean you have indexed real lectures. Verify `/api/stats` reports `corpus=lecture transcripts` and a positive lecture count.
 
 ### Transfer the actual index
+
+Prepare a portable archive with `python -m app.cli export --output a2z_index.zip`. On a machine with direct filesystem access, extract `index.sqlite3` into `DATA_DIR`; the accompanying SHA256 checks the exact snapshot. Playlist positions and catalog metadata are embedded in the database.
+
 
 Ignored local data does not reach Render through a code push. Choose one:
 

@@ -8,14 +8,19 @@ from app.config import Settings
 from app.store import load_database
 
 STOP = set("a an the is are was be to of and or for in on with what why how when where who explain please me my i it this that can do does difference between kya hai ka ki ke ko se aur mein me hota hote hoti batao samjhao bhai mujhe bata tell about works work algorithm code python java cpp give show use using versus vs time complexity return returns".split())
+STOP.update("taught teach teaches teaching covered cover lecture lectures video videos playlist striver strivers a2z dsa topic summary summarize summarise revision revise kis konsa kaunsa kaha kahan which find locate learned learn learning short briefly understand".split())
 ALIASES = {"dp":"dynamic programming", "bfs":"breadth first search", "dfs":"depth first search",
            "memoisation":"memoization", "tabulate":"tabulation", "bst":"binary search tree",
            "heap":"heap priority queue", "dijkstra":"dijkstra shortest path", "द्विआधारी":"binary",
            "रिकर्शन":"recursion", "रिकर्सन":"recursion", "मेमोइज़ेशन":"memoization",
-           "टैबुलेशन":"tabulation", "ग्राफ":"graph", "ऐरे":"array", "हैशिंग":"hashing"}
+           "टैबुलेशन":"tabulation", "ग्राफ":"graph", "ऐरे":"array", "हैशिंग":"hashing",
+           "kadane's":"kadane", "kadanes":"kadane", "djikstra":"dijkstra", "dijsktra":"dijkstra",
+           "hashmap":"hash map", "hashset":"hash set", "parameterized":"parameterised"}
 
 
 def tokens(text: str) -> list[str]:
+    for digit, word in (("2","two"),("3","three"),("4","four")):
+        text = re.sub(rf"\b{digit}\s*sum\b",word+" sum",text,flags=re.I)
     terms = re.findall(r"[^\W_]+", text.lower(), flags=re.UNICODE)
     result = []
     for term in terms:
@@ -131,6 +136,7 @@ class Retriever:
                     continue
                 selected.append({"chunk":c, "score":round(fused[idx], 5),
                     "lexical_coverage":round(len(matches[idx]) / len(terms), 3),
+                    "query_terms":terms,
                     "semantic_score":round(dense_scores[idx], 3) if idx in dense_scores else None})
                 if len(selected) == top_k:
                     break

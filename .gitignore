@@ -12,6 +12,8 @@ data/*
 !data/.gitkeep
 !data/README.md
 !data/eval.json
+!data/eval_lectures.json
 cookies*.txt
 *.log
+a2z_index.zip
 .DS_Store
