@@ -47,10 +47,10 @@ The tool prefers English captions, then Hindi (`CAPTION_LANGUAGES=en,hi`). Inspe
 ## 3. Fetch the full playlist
 
 ```bash
-python -m app.cli ingest
+python -m app.cli ingest --workers 1 --delay-seconds 5
 ```
 
-The command resumes valid cached transcripts. For modest concurrency use `python -m app.cli ingest --workers 3` (maximum 4; default 1). In-flight requests may finish after a failure triggers a stop. Never increase concurrency to work around a known block. To discover newly added videos:
+The command resumes valid cached transcripts. The default pause is five seconds after each new transcript; `--delay-seconds 10` can reduce the request rate further. Cached transcripts do not incur this pause. For modest concurrency use `python -m app.cli ingest --workers 3` (maximum 4; default 1). In-flight requests may finish after a failure triggers a stop. Never increase concurrency to work around a known block. To discover newly added videos:
 
 ```bash
 python -m app.cli ingest --refresh-playlist
@@ -77,6 +77,8 @@ python -m pip install -e ".[whisper]"
 python -m app.cli ingest --limit 3 --whisper
 ```
 
+Audio downloading also needs a supported JavaScript runtime: Deno 2.3+ or Node 22+. The ingestion extras install yt-dlp’s matching EJS scripts; the app selects installed Deno or Node automatically. Set `YOUTUBE_JS_RUNTIME` to choose explicitly. See the [upstream EJS setup guide](https://github.com/yt-dlp/yt-dlp/wiki/EJS). An HTML error page returned as an audio file is rejected before transcription.
+
 Defaults: `WHISPER_MODEL=small`, `WHISPER_DEVICE=cpu`, `WHISPER_LANGUAGE=en`. Test a representative lecture before scaling. CPU transcription of a long playlist can take substantial time. NVIDIA GPU execution requires compatible CUDA libraries; Intel Arc is not the CUDA backend. The app does not promise a fixed processing time.
 
 Audio is deleted only after the transcript is safely written. `--whisper` does not attempt audio download after a known IP block. Failed audio may remain under `data/audio/` for inspection. The web-serving install does not need Whisper.
@@ -84,6 +86,18 @@ Audio is deleted only after the transcript is safely written. `--whisper` does n
 ### Certificate trust errors
 
 Use an up-to-date trusted CA store. On a managed machine whose corporate CA is installed in the OS store, set `YOUTUBE_USE_SYSTEM_CA=true`; for the captions client, `REQUESTS_CA_BUNDLE` can point to your trusted PEM bundle. On Linux this may be `/etc/ssl/certs/ca-certificates.crt`; use your actual platform’s path. Do not disable HTTPS verification.
+
+### Transcribe a local audio/video copy
+
+When captions are disabled or the media host is unavailable from your preparation machine, a local copy can be transcribed without a YouTube request:
+
+```bash
+python -m pip install -e ".[whisper]"
+python -m app.cli transcribe lecture113.mp4 --video-id KSsk8AhdOZA --title "L41. Ceil in a Binary Search Tree | BST | C++ | Java"
+python -m app.cli index
+```
+
+Use the actual ID/title of the supplied lecture. The input file is preserved; a timestamped transcript is saved in `data/transcripts/`. The speech model needs an initial download unless its weights are already cached. As with other ASR output, inspect technical terms before sharing the index.
 
 ### Blocked access or unavailable transcripts
 
@@ -142,7 +156,7 @@ RETRIEVAL_BACKEND=hybrid
 EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
 ```
 
-The app combines BM25 and dense retrieval through reciprocal-rank fusion. It embeds each query with the **same pretrained model** used at indexing. Precomputed document vectors do not remove the query model's memory requirement. The first model download needs internet.
+The app combines BM25 and dense retrieval through reciprocal-rank fusion. Lexical evidence coverage is weighted by inverse document frequency: missing distinctive query terms count more than incidental common words. This helps reject unrelated questions that happen to share words such as “world” or “results” with a lecture. It embeds each query with the **same pretrained model** used at indexing. Precomputed document vectors do not remove the query model's memory requirement. The first model download needs internet.
 
 For stronger Hindi coverage, evaluate a multilingual model such as `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`. Rebuild with the changed model name before serving. Scores are ranking signals, not confidence probabilities.
 
@@ -217,6 +231,9 @@ Back up both `data/transcripts/` and `data/index.sqlite3`. They are ignored by G
 
 ```bash
 python -m app.cli export --output a2z_index.zip
+# Add --include-transcripts to preserve caption caches for future resume/reindex.
 ```
 
 Transfer this archive privately, extract `index.sqlite3` into the server’s data directory, and verify the supplied checksum. Application source comes from GitHub. No raw audio, cookies, API keys or request logs are included. The database embeds playlist metadata and coverage, so the target machine needs no YouTube ingestion packages to answer questions. Only the optional LLM and semantic query embedder have their own network/model requirements.
+
+To preserve work when moving between machines, use `python -m app.cli export --include-transcripts --output a2z_index.zip` and extract the whole archive into the target `DATA_DIR`. Its `transcripts/` cache allows ingestion to skip saved videos and permits a full index rebuild without downloading captions again. Store this data archive privately.

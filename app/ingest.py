@@ -1,11 +1,13 @@
 """Offline ingestion; no expensive transcription or YouTube scraping in HTTP handlers."""
 import json
+import math
 import os
 import re
 import time
 from functools import lru_cache
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
+import shutil
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 from app.config import PLAYLIST_URL, Settings
@@ -16,7 +18,15 @@ from app.store import atomic_json
 def youtube_options():
     # Use the OS trust store on managed machines with an installed corporate CA.
     # TLS verification remains enabled; never use nocheckcertificate.
-    return {"compat_opts":{"no-certifi"}} if os.getenv("YOUTUBE_USE_SYSTEM_CA", "false").lower() == "true" else {}
+    options = {"compat_opts":{"no-certifi"}} if os.getenv("YOUTUBE_USE_SYSTEM_CA", "false").lower() == "true" else {}
+    runtime = os.getenv("YOUTUBE_JS_RUNTIME", "").strip()
+    if not runtime:
+        runtime = "deno" if shutil.which("deno") else "node" if shutil.which("node") else ""
+    if runtime and runtime not in {"deno","node","quickjs","bun"}:
+        raise ValueError("YOUTUBE_JS_RUNTIME must be deno, node, quickjs or bun")
+    if runtime:
+        options["js_runtimes"] = {runtime:{}}
+    return options
 
 
 def validate_playlist(url: str) -> str:
@@ -79,14 +89,29 @@ def whisper(video: dict, settings: Settings) -> Transcript:
     audio = settings.data_dir / "audio"
     audio.mkdir(exist_ok=True)
     with YoutubeDL({**youtube_options(), "format":"bestaudio/best","outtmpl":str(audio / "%(id)s.%(ext)s"),
-                    "quiet":True,"noplaylist":True,"socket_timeout":20,"retries":2}) as ydl:
+                    "quiet":True,"noplaylist":True,"socket_timeout":20,"retries":2,"overwrites":True}) as ydl:
         info = ydl.extract_info(f"https://www.youtube.com/watch?v={video['video_id']}",download=True)
         path = Path(ydl.prepare_filename(info))
+    return transcribe_media(path, video)
+
+
+def transcribe_media(path: Path, video: dict) -> Transcript:
+    """Prepare uploaded/local media without contacting YouTube or deleting the input."""
+    if not re.fullmatch(r"[A-Za-z0-9_-]{11}", video.get("video_id", "")):
+        raise ValueError("A real 11-character --video-id is required")
+    if not isinstance(video.get("title"),str) or not 1 <= len(video["title"]) <= 500:
+        raise ValueError("A lecture title of 1–500 characters is required")
+    if not path.is_file():
+        raise FileNotFoundError(f"Media file does not exist: {path.name}")
+    with path.open("rb") as media:
+        header = media.read(512).lstrip().lower()
+    if path.stat().st_size < 1024 or header.startswith((b"<html", b"<!doctype html")):
+        raise RuntimeError("The download returned an error page or unusable audio; no transcript was saved")
     segments, info = whisper_model().transcribe(str(path),
         language=os.getenv("WHISPER_LANGUAGE", "en") or None, vad_filter=True,
         condition_on_previous_text=False, beam_size=5)
     items = [{"start":s.start,"end":s.end,"text":s.text.strip()} for s in segments if s.text.strip()]
-    # The caller persists the transcript before deleting audio.
+    # Only the YouTube ingestion caller removes its downloaded audio after persistence.
     return Transcript(**{**video,"duration":video.get("duration") or info.duration},
                       language=info.language, source="whisper", segments=items)
 
@@ -100,7 +125,8 @@ def load_cached(path: Path):
 
 def ingest_playlist(settings: Settings, url: str = PLAYLIST_URL, limit: int | None = None,
                     allow_whisper: bool = False, refresh_playlist: bool = False,
-                    start_position: int = 1, end_position: int | None = None, workers: int = 1):
+                    start_position: int = 1, end_position: int | None = None, workers: int = 1,
+                    delay_seconds: float = 5):
     validate_playlist(url)
     if limit is not None and limit < 1:
         raise ValueError("--limit must be positive")
@@ -108,6 +134,8 @@ def ingest_playlist(settings: Settings, url: str = PLAYLIST_URL, limit: int | No
         raise ValueError("Require 1 <= --start-position <= --end-position")
     if not 1 <= workers <= 4:
         raise ValueError("--workers must be between 1 and 4")
+    if not math.isfinite(delay_seconds) or not 0 <= delay_seconds <= 60:
+        raise ValueError("--delay-seconds must be between 0 and 60")
     manifest_path = settings.data_dir / "playlist.json"
     manifest = None
     if manifest_path.exists() and not refresh_playlist:
@@ -150,7 +178,7 @@ def ingest_playlist(settings: Settings, url: str = PLAYLIST_URL, limit: int | No
             atomic_json(path, transcript.model_dump())
             for audio in (settings.data_dir / "audio").glob(video["video_id"] + ".*"):
                 audio.unlink(missing_ok=True)
-            time.sleep(1)
+            time.sleep(delay_seconds)
             return "completed", video, None
         except Exception as exc:
             kind = type(exc).__name__

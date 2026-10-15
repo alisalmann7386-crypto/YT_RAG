@@ -16,7 +16,7 @@ class Settings:
     backend: str = field(default_factory=lambda: os.getenv("RETRIEVAL_BACKEND", "bm25"))
     embedding_model: str = field(default_factory=lambda: os.getenv("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2"))
     semantic_min: float = field(default_factory=lambda: float(os.getenv("SEMANTIC_MIN_SCORE", "0.40")))
-    lexical_min: float = field(default_factory=lambda: float(os.getenv("LEXICAL_MIN_COVERAGE", "0.35")))
+    lexical_min: float = field(default_factory=lambda: float(os.getenv("LEXICAL_MIN_COVERAGE", "0.50")))
     chunk_seconds: int = field(default_factory=lambda: int(os.getenv("CHUNK_SECONDS", "75")))
     overlap: int = field(default_factory=lambda: int(os.getenv("CHUNK_OVERLAP", "15")))
     top_k: int = field(default_factory=lambda: int(os.getenv("TOP_K", "6")))

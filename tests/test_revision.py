@@ -2,6 +2,7 @@
 import json
 import hashlib
 import zipfile
+import pytest
 from fastapi.testclient import TestClient
 from app.answer import answer_question, source, short_summary
 from app.catalog import lecture_label, load_catalog, locate
@@ -110,6 +111,20 @@ def test_export_contains_only_portable_snapshot_and_verified_checksum(tmp_path):
         assert result["sha256"] in archive.read("index.sha256").decode()
 
 
+def test_export_caption_cache_can_rebuild_without_youtube(tmp_path):
+    settings, _ = prepare(tmp_path / "source")
+    result = export_index(settings,tmp_path / "prepared_with_captions.zip",include_transcripts=True)
+    target = Settings(data_dir=tmp_path / "target",provider="none",backend="bm25",demo=False,app_key="")
+    with zipfile.ZipFile(result["archive"]) as archive:
+        archive.extractall(target.data_dir)
+    assert result["cached_transcripts"] == 1
+    target.database.unlink()
+    build_index(target)
+    answer = answer_question(AskRequest(question="recursion base case",mode="locate"),Retriever(target),target)
+    assert answer["sources"][0]["playlist_position"] == 8
+    assert answer["sources"][0]["matched_start"] == 120
+
+
 def test_parallel_ingestion_reports_successes_and_preserves_positions(tmp_path,monkeypatch):
     import app.ingest as module
     settings, manifest = prepare(tmp_path)
@@ -132,3 +147,49 @@ def test_missing_main_lecture_does_not_get_an_incidental_timestamp(tmp_path):
     result = answer_question(AskRequest(question="Where is climbing stairs taught?",mode="locate"),Retriever(settings),settings)
     assert result["mode"] == "catalog" and not result["sources"]
     assert result["locations"][0]["playlist_position"] == 21
+
+
+def test_common_incidental_words_do_not_ground_an_unrelated_question(tmp_path):
+    settings, _ = prepare(tmp_path)
+    path = tmp_path / "transcripts" / "abcdefghijk.json"
+    transcript = json.loads(path.read_text())
+    transcript["segments"][0]["text"] = "In the world of recursion, store previous results in the table."
+    atomic_json(path,transcript)
+    build_index(settings)
+    result = answer_question(AskRequest(question="cricket world cup results"),Retriever(settings),settings)
+    assert result["mode"] == "refusal" and result["sources"] == []
+
+
+def test_audio_error_page_never_reaches_transcription(tmp_path,monkeypatch):
+    import yt_dlp
+    import app.ingest as module
+    settings, manifest = prepare(tmp_path)
+    fake_audio = tmp_path / "bad.webm"
+    fake_audio.write_text("<html><h1>Site Unavailable</h1></html>")
+    class Download:
+        def __init__(self,*a,**k):pass
+        def __enter__(self):return self
+        def __exit__(self,*a):pass
+        def extract_info(self,*a,**k):return {}
+        def prepare_filename(self,*a):return str(fake_audio)
+    monkeypatch.setattr(yt_dlp,"YoutubeDL",Download)
+    def forbidden():
+        raise AssertionError("An error page must not be transcribed")
+    monkeypatch.setattr(module,"whisper_model",forbidden)
+    with pytest.raises(RuntimeError,match="error page"):
+        module.whisper(manifest["videos"][0],settings)
+
+
+def test_local_media_transcription_preserves_input_and_needs_no_youtube(tmp_path,monkeypatch):
+    from types import SimpleNamespace
+    import app.ingest as module
+    path = tmp_path / "uploaded.webm"
+    path.write_bytes(b"synthetic-media"*100)
+    class SpeechModel:
+        def transcribe(self,filename,**kwargs):
+            assert filename == str(path)
+            return iter([SimpleNamespace(start=12,end=18,text="Ceil is the smallest value not below the key.")]),SimpleNamespace(duration=20,language="en")
+    monkeypatch.setattr(module,"whisper_model",lambda:SpeechModel())
+    transcript = module.transcribe_media(path,{"video_id":"abcdefghijk","title":"Ceil in BST"})
+    assert transcript.source == "whisper" and transcript.segments[0].start == 12
+    assert transcript.duration == 20 and path.exists()

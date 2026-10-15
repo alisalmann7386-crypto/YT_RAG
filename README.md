@@ -56,7 +56,7 @@ python -m app.cli search "recursion base case"
 Inspect `data/transcripts/` and `data/ingest_report.json`. When the pilot works:
 
 ```bash
-python -m app.cli ingest --workers 3
+python -m app.cli ingest --workers 1 --delay-seconds 5
 python -m app.cli index
 python -m app.cli stats
 ```
@@ -71,6 +71,7 @@ Read **[docs/TRAINING.md](docs/TRAINING.md)** for the complete setup, semantic e
 
 ```bash
 python -m app.cli export --output a2z_index.zip
+# Add --include-transcripts to preserve caption caches for future resume/reindex.
 ```
 
 Extract `index.sqlite3` into the target `data/` directory and start the server. The archive includes its SHA256 checksum and coverage report. The snapshot also contains playlist order, so no playlist scrape is needed at query time. See the deployment guide for HTTPS index transfer on Render.

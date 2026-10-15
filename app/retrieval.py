@@ -92,16 +92,21 @@ class Retriever:
                 return []
             n = len(self.chunks)
             scores, matches = defaultdict(float), defaultdict(set)
+            query_weights = {}
             for term in terms:
                 posting = self.postings.get(term, {})
                 idf = math.log(1 + (n - len(posting) + .5) / (len(posting) + .5))
+                query_weights[term] = idf
                 for idx, tf in posting.items():
                     if video_id and self.chunks[idx].video_id != video_id:
                         continue
                     norm = tf + 1.5 * (1 - .75 + .75 * self.lengths[idx] / max(1, self.avg_len))
                     scores[idx] += idf * tf * 2.5 / norm
                     matches[idx].add(term)
-            lexical = sorted([i for i in scores if len(matches[i]) / len(terms) >= self.settings.lexical_min], key=lambda i: scores[i], reverse=True)
+            total_weight = sum(query_weights.values())
+            coverage = {i:sum(query_weights[t] for t in matched)/max(total_weight,1e-9)
+                        for i,matched in matches.items()}
+            lexical = sorted([i for i in scores if coverage[i] >= self.settings.lexical_min], key=lambda i: scores[i], reverse=True)
             dense, dense_scores = [], {}
             if self.vectors is not None:
                 query = embed([question], self.settings.embedding_model)[0]
@@ -135,7 +140,7 @@ class Retriever:
                 if duplicate:
                     continue
                 selected.append({"chunk":c, "score":round(fused[idx], 5),
-                    "lexical_coverage":round(len(matches[idx]) / len(terms), 3),
+                    "lexical_coverage":round(coverage.get(idx,0), 3),
                     "query_terms":terms,
                     "semantic_score":round(dense_scores[idx], 3) if idx in dense_scores else None})
                 if len(selected) == top_k:

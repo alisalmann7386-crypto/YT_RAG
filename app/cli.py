@@ -110,7 +110,7 @@ def evaluate(settings, path):
     return summary["passed"] == summary["total"] and summary["total"] > 0
 
 
-def export_index(settings, output):
+def export_index(settings, output, include_transcripts=False):
     """Portable runtime snapshot; no API keys, cookies, raw audio, or server logs."""
     chunks, _, metadata = load_database(settings.database)
     if not chunks:
@@ -128,13 +128,27 @@ def export_index(settings, output):
               "Check /api/stats for caption coverage; missing videos remain title-searchable.\n"
               "This archive contains runtime data, not application source or API keys.\n"
               "For cloud transfer see docs/DEPLOYMENT.md in the repository.\n")
+    transcript_files = []
+    if include_transcripts:
+        for video_id in sorted({c.video_id for c in chunks if c.video_id}):
+            path = settings.data_dir / "transcripts" / f"{video_id}.json"
+            if path.exists():
+                transcript = Transcript.model_validate_json(path.read_text(encoding="utf-8"))
+                if transcript.video_id != video_id:
+                    raise ValueError(f"Cached transcript identity mismatch: {path.name}")
+                transcript_files.append((path.name, transcript.model_dump_json()))
     with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as archive:
         archive.writestr("index.sqlite3",content)
         archive.writestr("index.sha256",checksum+"  index.sqlite3\n")
         archive.writestr("coverage.json",json.dumps(metadata.get("coverage",{}),indent=2))
         archive.writestr("README.txt",readme)
+        if include_transcripts:
+            archive.writestr("playlist.json",json.dumps(metadata.get("playlist",{}),ensure_ascii=False,indent=2))
+            for filename, transcript_json in transcript_files:
+                archive.writestr("transcripts/"+filename,transcript_json)
     return {"archive":str(output),"sha256":checksum,"chunks":len(chunks),
-            "lectures":len({c.video_id for c in chunks if c.video_id}),"bytes":output.stat().st_size}
+            "lectures":len({c.video_id for c in chunks if c.video_id}),
+            "cached_transcripts":len(transcript_files),"bytes":output.stat().st_size}
 
 
 def main(argv=None):
@@ -148,6 +162,7 @@ def main(argv=None):
     ingest.add_argument("--start-position",type=int,default=1)
     ingest.add_argument("--end-position",type=int)
     ingest.add_argument("--workers",type=int,default=1,help="Concurrent caption requests, 1–4; default 1")
+    ingest.add_argument("--delay-seconds",type=float,default=5,help="Pause after each new transcript; default 5 seconds")
     catalog_command = sub.add_parser("catalog",help="Refresh only playlist titles, order and links; no audio or captions")
     catalog_command.add_argument("--playlist",default=os.getenv("PLAYLIST_URL",PLAYLIST_URL))
     index = sub.add_parser("index",help="Build a complete index from cached transcripts")
@@ -158,6 +173,10 @@ def main(argv=None):
     imp.add_argument("file",type=Path)
     imp.add_argument("--video-id")
     imp.add_argument("--title")
+    media = sub.add_parser("transcribe",help="Transcribe a local audio/video file without YouTube access")
+    media.add_argument("file",type=Path)
+    media.add_argument("--video-id",required=True)
+    media.add_argument("--title",required=True)
     search = sub.add_parser("search")
     search.add_argument("question")
     search.add_argument("--video-id")
@@ -167,6 +186,7 @@ def main(argv=None):
     serve.add_argument("--reload",action="store_true")
     export = sub.add_parser("export",help="Package the prepared index for offline/cloud transfer")
     export.add_argument("--output",type=Path,default=Path("a2z_index.zip"))
+    export.add_argument("--include-transcripts",action="store_true",help="Include validated caption caches for resuming ingestion")
     sub.add_parser("stats")
     sub.add_parser("preflight",help="Check local dependencies and configuration without paid calls")
     ev = sub.add_parser("eval")
@@ -181,7 +201,7 @@ def main(argv=None):
         elif args.command == "ingest":
             from app.ingest import ingest_playlist
             report = ingest_playlist(settings,args.playlist,args.limit,args.whisper,args.refresh_playlist,
-                                     args.start_position,args.end_position,args.workers)
+                                     args.start_position,args.end_position,args.workers,args.delay_seconds)
             print(json.dumps(report,indent=2))
             if report["failed"] or report["aborted"]:
                 return 2
@@ -194,12 +214,19 @@ def main(argv=None):
         elif args.command == "import":
             from app.ingest import import_transcript
             print(import_transcript(args.file,settings,args.video_id,args.title))
+        elif args.command == "transcribe":
+            from app.ingest import transcribe_media
+            transcript = transcribe_media(args.file,{"video_id":args.video_id,"title":args.title})
+            destination = settings.data_dir / "transcripts" / f"{transcript.video_id}.json"
+            atomic_json(destination,transcript.model_dump())
+            print(json.dumps({"path":str(destination),"segments":len(transcript.segments),
+                              "source":transcript.source,"input_preserved":True},indent=2))
         elif args.command == "search":
             from app.answer import source
             hits = Retriever(settings).search(args.question, settings.top_k,args.video_id)
             print(json.dumps([source(h,i+1,settings) for i,h in enumerate(hits)],indent=2,ensure_ascii=False))
         elif args.command == "export":
-            print(json.dumps(export_index(settings,args.output),indent=2))
+            print(json.dumps(export_index(settings,args.output,args.include_transcripts),indent=2))
         elif args.command == "stats":
             chunks,_,metadata = load_database(settings.database)
             print(json.dumps({k:v for k,v in metadata.items() if k not in {"playlist","coverage"}} |
