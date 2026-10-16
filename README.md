@@ -115,6 +115,8 @@ Restart after changing environment values. Keys remain on the server. Missing ke
 
 For Groq `openai/gpt-oss-20b` / `openai/gpt-oss-120b`, the app requests a strict JSON answer with source IDs drawn only from the retrieved excerpts. It renders the citation markers itself, validates every answer block, and ignores provider reasoning metadata. Other models retain the free-form citation validator. Truncated or invalid responses still fall back to evidence; a configured provider in `/api/stats` alone does not prove that generation succeeded. Use **Explain** and check for **Generated explanation** below the answer; **Find lecture** intentionally returns extractive locations.
 
+For explicit complexity questions, generation also includes available complexity sections from the top matching lecture. Literal equal-partition examples are checked for totals and element multiplicities, and requested complexity must be addressed. A detected inconsistency permits one correction attempt; persistent failures return evidence instead. These scoped checks do not prove arbitrary mathematical claims or code correctness.
+
 ## Retrieval choices
 
 | Setup | Requirements | Suitable for |
