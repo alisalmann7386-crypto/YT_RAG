@@ -113,6 +113,8 @@ LLM_MODEL=openai/gpt-oss-20b
 
 Restart after changing environment values. Keys remain on the server. Missing keys, provider errors, and invalid citations fall back to retrieved excerpts. A no-evidence refusal makes no LLM call. Provider costs and quotas depend on your account.
 
+For Groq `openai/gpt-oss-20b` / `openai/gpt-oss-120b`, the app requests a strict JSON answer with source IDs drawn only from the retrieved excerpts. It renders the citation markers itself, validates every answer block, and ignores provider reasoning metadata. Other models retain the free-form citation validator. Truncated or invalid responses still fall back to evidence; a configured provider in `/api/stats` alone does not prove that generation succeeded. Use **Explain** and check for **Generated explanation** below the answer; **Find lecture** intentionally returns extractive locations.
+
 ## Retrieval choices
 
 | Setup | Requirements | Suitable for |

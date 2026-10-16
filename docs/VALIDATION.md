@@ -24,7 +24,7 @@ Earlier timeouts, proxy failures, and request blocks for #196, #242, #261, #268â
 
 ## Checks passed
 
-- **37 Python tests**, including no-network serving, caption-level seek links, truthful title-only fallback, positions/series labels, provider failures, optional backend fixtures, cache/export integrity, interrupted export preservation, direct lecture lookup, and result diversity.
+- **49 Python tests**, including no-network serving, caption-level seek links, truthful title-only fallback, positions/series labels, provider failures, optional backend fixtures, cache/export integrity, interrupted export preservation, direct lecture lookup, result diversity, and structured generation regressions.
 - **7 frontend DOM integration tests**: startup, search/bookmarks/coverage, per-lecture filters, earlier citations, cancellation, unavailable storage, safe text rendering, and keyboard reset behavior.
 - **18/18 real-caption retrieval cases**: six lecture/time-window targets, nine additional lecture-ID targets from newly saved sections, and three unrelated-query refusals. This is a regression sample, not an exhaustive quality score for every possible question.
 - **8/8 original-notes demo cases**.
@@ -36,6 +36,12 @@ Earlier timeouts, proxy failures, and request blocks for #196, #242, #261, #268â
 The buildless frontend now uses a dark charcoal workspace with mint accents and secondary violet/amber/blue cards. It includes a searchable lecture library, saved view, availability filters, topic shortcuts, visible coverage and missing-lecture details, request cancellation, source tabs, caption excerpts, timestamp-link copying, lecture preview, and responsive library/source drawers. Reduced-motion preferences and keyboard focus styles are supported.
 
 ## Verification limits
+
+### Groq generation follow-up
+
+The live service returned a citation-validation fallback after Groq was configured. Configuration and successful HTTP responses do not ensure usable source references. GPT-OSS generation now uses Groq's documented strict JSON-schema mode with excerpt IDs enumerated in the schema. The application validates and renders source IDs, rejects incomplete/uncited blocks and out-of-range IDs, preserves explicit refusals and code indices, and ignores reasoning metadata. Low reasoning effort and a 4,096-token completion allowance replace the previous 1,600-token free-form budget for these two supported Groq models. Length-truncated responses receive a distinct fallback warning. Other models keep the existing free-form citation path.
+
+Twelve additional generation cases cover structured citation rendering/renumbering, request settings, invalid IDs/types, missing/contradictory evidence, incomplete code, embedded invalid citations, truncation, explicit refusal, and code indices. These use mocked provider responses. The 18 real-caption retrieval cases still pass. A pre-fix live request was checked using the deployed application; validating the new provider behavior requires the updated commit to be deployed.
 
 DOM checks do not verify visual browser layout. Browser rendering was not run because the prescribed browser-control capability was unavailable. Docker building and external hosting were not run; this is a FastAPI repository with Render/Docker configuration, not a verified public deployment.
 

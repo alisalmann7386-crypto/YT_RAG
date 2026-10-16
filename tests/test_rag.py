@@ -139,6 +139,7 @@ def test_ingest_cache_resume_and_abort(settings,monkeypatch):
 def test_invalid_citations_fall_back(settings,monkeypatch,text):
     build_index(settings,demo=True)
     settings.provider="groq"
+    settings.llm_model="custom-chat"  # Legacy free-form providers still validate citations.
     monkeypatch.setenv("GROQ_API_KEY","test-key-not-real")
     monkeypatch.setattr(httpx,"post",lambda *a,**k:httpx.Response(200,json={"choices":[{"message":{"content":text}}]},request=httpx.Request("POST","https://example.com")))
     result=answer_question(AskRequest(question="memoization vs tabulation"),Retriever(settings),settings)
@@ -148,6 +149,7 @@ def test_invalid_citations_fall_back(settings,monkeypatch,text):
 def test_generated_citations_renumber_and_provider_failure(settings,monkeypatch):
     build_index(settings,demo=True)
     settings.provider="groq"
+    settings.llm_model="custom-chat"
     monkeypatch.setenv("GROQ_API_KEY","test-key-not-real")
     monkeypatch.setattr(httpx,"post",lambda *a,**k:httpx.Response(200,json={"choices":[{"message":{"content":"Memoization caches results. [1]"}}]},request=httpx.Request("POST","https://example.com")))
     result=answer_question(AskRequest(question="memoization"),Retriever(settings),settings)
@@ -168,6 +170,7 @@ def test_hybrid_rejects_mismatched_index(settings):
 def test_code_indices_are_not_citations(settings,monkeypatch):
     build_index(settings,demo=True)
     settings.provider="groq"
+    settings.llm_model="custom-chat"
     monkeypatch.setenv("GROQ_API_KEY","test-key-not-real")
     text="This implementation uses the evidence. [1]\n\n```python\nbest = nums[0]\n```"
     monkeypatch.setattr(httpx,"post",lambda *a,**k:httpx.Response(200,json={"choices":[{"message":{"content":text}}]},request=httpx.Request("POST","https://example.com")))
