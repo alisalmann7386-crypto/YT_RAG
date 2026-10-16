@@ -1,0 +1,20 @@
+{
+  "checked_at": "2026-10-16T09:06:35.195771+00:00",
+  "playlist_url": "https://www.youtube.com/playlist?list=PLgUwDviBIf0oF6QL8m22w1hIDC1vJ_BHz",
+  "catalog_verified_at": "2026-10-16T08:59:03.642058+00:00",
+  "catalog_lectures": 315,
+  "saved_lectures": 314,
+  "coverage_percent": 99.7,
+  "timed_windows": 6933,
+  "missing": [
+    {
+      "video_id": "KSsk8AhdOZA",
+      "title": "L41. Ceil in a Binary Search Tree | BST | C++ | Java",
+      "duration": 336,
+      "playlist_position": 113,
+      "caption_error": "TranscriptsDisabled",
+      "audio_fallback": "195-byte HTML error page; rejected before transcription",
+      "timestamp_available": false
+    }
+  ]
+}

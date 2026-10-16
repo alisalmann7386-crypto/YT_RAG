@@ -4,13 +4,17 @@ A deployable study application for [Striver’s A2Z DSA playlist](https://www.yo
 
 **What students get:** ask “Where is binary search taught?” or “Revise distinct subsequences” to see the video title, playlist position, the creator's series label (for example `DP 32`), a timestamp link, and a short extractive recap from indexed captions. Optional LLM explanations add examples, hints and code.
 
-**Data included in GitHub:** a verified catalog of **315 accessible A2Z videos** (15 October 2026 UTC), plus 22 original DSA revision notes. One unavailable/untitled playlist entry was excluded. The catalog provides genuine lecture links immediately; timestamps and lecture summaries require a prepared caption index. Raw lecture transcripts, API keys and runtime databases are not committed. Coverage is visible in the website and `/api/stats`; no title-only result is presented as a verified timestamp.
+**Data included in GitHub:** a verified catalog of **315 accessible A2Z videos** (16 October 2026 UTC), plus 22 original DSA revision notes. One unavailable/untitled playlist entry was excluded. The catalog provides genuine lecture links immediately; timestamps and lecture summaries require a prepared caption index. Raw lecture transcripts, API keys and runtime databases are not committed. Coverage is visible in the website and `/api/stats`; no title-only result is presented as a verified timestamp.
+
+**Prepared data checkpoint:** **314/315 lectures (99.7%)**, with **6,933 timed windows**, are saved in the separately supplied `A2Z_314_Lectures.zip`. Only playlist #113, *Ceil in BST*, remains without captions: YouTube reports disabled transcripts and the audio response is an HTML error page. Its real video link is still searchable. See [the coverage report](docs/LECTURE_COVERAGE.json).
 
 ## Features
 
 - Caption-level timestamp links, playlist positions, series labels, concise extractive summaries, and an embedded YouTube player.
 - Find lecture and Quick revision modes; title-search fallback for missing captions.
-- Full playlist browser, caption coverage, saved lectures on your device, and chat exports including source links.
+- Professional dark workspace with mint, violet, amber, and blue accents, responsive lecture library, source explorer, embedded playback, and useful keyboard shortcuts.
+- Full playlist browser, topic shortcuts, caption availability filters, coverage details, saved lectures on your device, and chat exports including source links.
+- Stop-response control, caption excerpts, timestamp-link copying, and source navigation that restores the correct evidence for earlier answers.
 - Per-lecture retrieval filters; English, Hinglish, and Hindi response choices.
 - Explain, hint, compare, complexity, and code modes with a configured LLM.
 - Captions-first offline ingestion, cached resume, optional Whisper, JSON/SRT/VTT imports.
@@ -36,9 +40,17 @@ python -m pip install -e ".[dev,ingest]"
 Copy `.env.example` to `.env` (`Copy-Item .env.example .env` in PowerShell, or `cp .env.example .env` on macOS/Linux), then:
 
 ```bash
-python -m app.cli index --demo
 python -m app.cli serve --host 0.0.0.0 --port 8000
 ```
+
+If a prepared index is present, it is used immediately. Otherwise, the server creates the original-notes demo. To load the supplied lecture bundle before starting:
+
+```bash
+python -m zipfile -e /path/to/A2Z_314_Lectures.zip data
+python -m app.cli serve --host 0.0.0.0 --port 8000
+```
+
+Do not run `index --demo` over a prepared lecture index; that command deliberately replaces it with sample notes.
 
 Open **http://localhost:8000**. API documentation: **http://localhost:8000/docs**. Other devices on the same Wi-Fi use **http://YOUR_LAPTOP_LAN_IP:8000** after you allow inbound TCP 8000. `0.0.0.0` is the bind address, not a browser address; it does not automatically create public internet access.
 
@@ -75,6 +87,19 @@ python -m app.cli export --output a2z_index.zip
 ```
 
 Extract `index.sqlite3` into the target `data/` directory and start the server. The archive includes its SHA256 checksum and coverage report. The snapshot also contains playlist order, so no playlist scrape is needed at query time. See the deployment guide for HTTPS index transfer on Render.
+
+## Verify changes
+
+```bash
+python -m pytest -q
+# Optional frontend development checks; Node 20+ only for these checks:
+npm ci
+npm run test:ui
+# With the prepared lecture index:
+python -m app.cli eval --file data/eval_lectures.json
+```
+
+The frontend remains buildless; Node is not required to serve the website. DOM interaction tests exercise controls and rendering logic, while actual browser layout remains a separate check. Validation details are in [docs/VALIDATION.md](docs/VALIDATION.md).
 
 ## Enable generated explanations
 

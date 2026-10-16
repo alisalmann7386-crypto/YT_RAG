@@ -8,6 +8,7 @@ from functools import lru_cache
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
 import shutil
+from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 from app.config import PLAYLIST_URL, Settings
@@ -58,15 +59,19 @@ def list_playlist(url: str):
                       "playlist_position":position})
     if not items:
         raise RuntimeError("Playlist has no accessible videos")
-    return {"url":url,"title":info.get("title","YouTube playlist"),"videos":items}
+    return {"url":url,"title":info.get("title","YouTube playlist"),"videos":items,
+            "verified_at":datetime.now(timezone.utc).isoformat()}
 
 
 def captions(video: dict) -> Transcript:
     from youtube_transcript_api import YouTubeTranscriptApi
     from requests import Session
+    read_timeout = float(os.getenv("CAPTION_READ_TIMEOUT", "60"))
+    if not math.isfinite(read_timeout) or not 1 <= read_timeout <= 300:
+        raise ValueError("CAPTION_READ_TIMEOUT must be between 1 and 300 seconds")
     class TimedSession(Session):
         def request(self, *args, **kwargs):
-            kwargs.setdefault("timeout", (10, 30))
+            kwargs.setdefault("timeout", (10, read_timeout))
             return super().request(*args, **kwargs)
     languages = [x.strip() for x in os.getenv("CAPTION_LANGUAGES", "en,hi").split(",") if x.strip()]
     with TimedSession() as session:

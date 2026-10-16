@@ -93,6 +93,37 @@ def test_summary_is_query_relevant_and_bounded():
     assert lecture_label("Unnumbered lecture") is None
 
 
+def test_lecture_lookup_searches_title_match_beyond_global_top_k(tmp_path,monkeypatch):
+    settings, _ = prepare(tmp_path)
+    retriever = Retriever(settings)
+    search = retriever.search
+    calls = []
+    def truncated_global(question,top_k=6,video_id=None):
+        calls.append(video_id)
+        if video_id is None:
+            retriever.refresh()
+            return []
+        return search(question,top_k,video_id)
+    monkeypatch.setattr(retriever,"search",truncated_global)
+    result = answer_question(AskRequest(question="Where is recursion taught?",mode="locate",top_k=1),retriever,settings)
+    assert calls == [None,"abcdefghijk"]
+    assert result["grounded"] and result["sources"][0]["video_id"] == "abcdefghijk"
+
+
+def test_global_results_leave_room_for_other_lectures(tmp_path):
+    from app.models import Chunk
+    from app.store import build_database
+    settings = Settings(data_dir=tmp_path,provider="none",backend="bm25")
+    chunks = [Chunk(id=str(i),kind="lecture",video_id="abcdefghijk",title="Merge sort",text="Merge sort merge sort algorithm",start=i*100,end=i*100+60) for i in range(8)]
+    chunks.append(Chunk(id="other",kind="lecture",video_id="zzzzzzzzzzz",title="Merge sort introduction",text="Merge sort divides an array",start=10,end=70))
+    build_database(settings.database,chunks,{})
+    retriever=Retriever(settings)
+    hits=retriever.search("merge sort",6)
+    assert sum(h["chunk"].video_id == "abcdefghijk" for h in hits) == 2
+    assert any(h["chunk"].video_id == "zzzzzzzzzzz" for h in hits)
+    assert len(retriever.search("merge sort",6,"abcdefghijk")) == 6
+
+
 def test_corrupt_catalog_entries_are_ignored(tmp_path):
     atomic_json(tmp_path / "playlist.json",{"videos":[{"video_id":"abcdefghijk","title":None},
         {"video_id":"zzzzzzzzzzz","title":"Recursion","playlist_position":9}]})
@@ -123,6 +154,23 @@ def test_export_caption_cache_can_rebuild_without_youtube(tmp_path):
     answer = answer_question(AskRequest(question="recursion base case",mode="locate"),Retriever(target),target)
     assert answer["sources"][0]["playlist_position"] == 8
     assert answer["sources"][0]["matched_start"] == 120
+
+
+def test_failed_export_preserves_the_previous_archive(tmp_path,monkeypatch):
+    settings, _ = prepare(tmp_path / "source")
+    output=tmp_path / "prepared.zip"
+    export_index(settings,output)
+    previous=output.read_bytes()
+    write=zipfile.ZipFile.writestr
+    def fail(archive,name,*args,**kwargs):
+        if name == "index.sha256":
+            raise OSError("Interrupted export")
+        return write(archive,name,*args,**kwargs)
+    monkeypatch.setattr(zipfile.ZipFile,"writestr",fail)
+    with pytest.raises(OSError,match="Interrupted export"):
+        export_index(settings,output)
+    assert output.read_bytes() == previous
+    assert not list(tmp_path.glob(".prepared.zip.*.tmp"))
 
 
 def test_parallel_ingestion_reports_successes_and_preserves_positions(tmp_path,monkeypatch):

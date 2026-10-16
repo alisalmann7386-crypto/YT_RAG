@@ -101,16 +101,22 @@ def _answer_question(request: AskRequest, retriever: Retriever, settings: Settin
         r"\b(where|which lecture|which video|kis lecture|kahan|kaha)\b",request.question,re.I))
     if find_lecture and locations:
         # A passing mention in an unrelated lecture is weaker than a direct title match.
-        best = {v["video_id"] for v in locations if v["score"] >= locations[0]["score"]-.15}
-        focused = [h for h in hits if h["chunk"].video_id in best]
-        if focused or any(h["chunk"].kind == "lecture" for h in hits):
+        best = [v["video_id"] for v in locations if v["score"] >= locations[0]["score"]-.15]
+        # Search these lectures directly: a global top-k can be filled by passing
+        # mentions and exclude every window of the actual lecture.
+        focused = []
+        for video_id in best:
+            focused.extend(retriever.search(query, request.top_k, video_id))
+        focused.sort(key=lambda h:(h["lexical_coverage"], h["score"]), reverse=True)
+        focused = focused[:request.top_k]
+        if focused or any(c.kind == "lecture" for c in retriever.chunks):
             hits = focused
     if not hits:
         if locations:
             answer = "Related lectures found by title:\n\n" + "\n\n".join(
                 f"Playlist #{v['playlist_position']} — {v['title']}" for v in locations[:3])
             return {"answer":answer,"sources":[],"locations":locations,"grounded":False,
-                    "mode":"catalog","retrieved":0,"warning":"Title matches only. Captions for this question are not indexed, so an in-video timestamp or lecture summary cannot be verified."}
+                    "mode":"catalog","retrieved":0,"warning":"Title matches only. No supporting caption match was found for this question, so an in-video timestamp or lecture summary cannot be verified."}
         return {"answer":REFUSAL,"sources":[],"grounded":False,"mode":"refusal","retrieved":0,"warning":None}
     if find_lecture:
         return extractive(hits, settings, request=request)

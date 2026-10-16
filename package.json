@@ -1,0 +1,6 @@
+{
+  "name": "a2z-studyroom-ui-checks",
+  "private": true,
+  "scripts": {"test:ui": "node --test tests/ui_interactions.cjs"},
+  "devDependencies": {"linkedom": "0.18.13"}
+}

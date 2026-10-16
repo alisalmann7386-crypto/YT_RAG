@@ -1,11 +1,86 @@
 [
-  {"question":"parameterised functional recursion", "expect_video_id":"69ZCDFy-OUo", "expect_second":319, "tolerance":30},
-  {"question":"hashing division rule collision", "expect_video_id":"KEs5UyBJ39g", "expect_second":2892, "tolerance":30},
-  {"question":"merge sort merge algorithm", "expect_video_id":"ogjf7ORKfd8", "expect_second":75, "tolerance":30},
-  {"question":"Kadane maximum subarray", "expect_video_id":"AHZpyENo7k4", "expect_second":1191, "tolerance":30},
-  {"question":"Moore voting majority element", "expect_video_id":"nP_ns3uSh80", "expect_second":798, "tolerance":30},
-  {"question":"two sum hashmap", "expect_video_id":"frf7qxiN2qU", "expect_second":1339, "tolerance":30},
-  {"question":"React useEffect hooks", "expect_refusal":true},
-  {"question":"income tax filing", "expect_refusal":true},
-  {"question":"cricket world cup results", "expect_refusal":true}
+  {
+    "question": "parameterised functional recursion",
+    "expect_video_id": "69ZCDFy-OUo",
+    "expect_second": 319,
+    "tolerance": 30
+  },
+  {
+    "question": "hashing division rule collision",
+    "expect_video_id": "KEs5UyBJ39g",
+    "expect_second": 2892,
+    "tolerance": 30
+  },
+  {
+    "question": "merge sort merge algorithm",
+    "expect_video_id": "ogjf7ORKfd8",
+    "expect_second": 75,
+    "tolerance": 30
+  },
+  {
+    "question": "Kadane maximum subarray",
+    "expect_video_id": "AHZpyENo7k4",
+    "expect_second": 1191,
+    "tolerance": 30
+  },
+  {
+    "question": "Moore voting majority element",
+    "expect_video_id": "nP_ns3uSh80",
+    "expect_second": 798,
+    "tolerance": 30
+  },
+  {
+    "question": "two sum hashmap",
+    "expect_video_id": "frf7qxiN2qU",
+    "expect_second": 1339,
+    "tolerance": 30
+  },
+  {
+    "question": "React useEffect hooks",
+    "expect_refusal": true
+  },
+  {
+    "question": "income tax filing",
+    "expect_refusal": true
+  },
+  {
+    "question": "cricket world cup results",
+    "expect_refusal": true
+  },
+  {
+    "question": "partition equal subset sum",
+    "expect_video_id": "7win3dcgo3k"
+  },
+  {
+    "question": "odd even linked list",
+    "expect_video_id": "qf6qp7GzD5Q"
+  },
+  {
+    "question": "merge k sorted lists",
+    "expect_video_id": "1zktEppsdig"
+  },
+  {
+    "question": "power exponentiation",
+    "expect_video_id": "hFWckDXE-K8"
+  },
+  {
+    "question": "sieve of eratosthenes",
+    "expect_video_id": "g5Fuxn_AvSk"
+  },
+  {
+    "question": "count prime range",
+    "expect_video_id": "os82DjD2-MA"
+  },
+  {
+    "question": "LRU cache",
+    "expect_video_id": "z9bJUPxzFOw"
+  },
+  {
+    "question": "LFU cache",
+    "expect_video_id": "mzqHlAW7jeE"
+  },
+  {
+    "question": "trapping rainwater",
+    "expect_video_id": "1_5VuquLbXg"
+  }
 ]

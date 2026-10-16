@@ -44,6 +44,8 @@ Default playlist: https://www.youtube.com/playlist?list=PLgUwDviBIf0oF6QL8m22w1h
 
 The tool prefers English captions, then Hindi (`CAPTION_LANGUAGES=en,hi`). Inspect the generated JSON in `data/transcripts/`, checking technical terms and real segment start/end timestamps against each video. Check `data/ingest_report.json` for failures. A nonzero exit or `aborted=true` means the run was incomplete.
 
+Caption requests use a 10-second connection timeout and a 60-second read timeout. For a slow response, set `CAPTION_READ_TIMEOUT=120` (valid range 1–300 seconds). Increasing a timeout does not resolve a YouTube IP block.
+
 ## 3. Fetch the full playlist
 
 ```bash

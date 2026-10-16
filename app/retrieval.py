@@ -132,8 +132,13 @@ class Retriever:
                     fused[idx] += 1 / (60 + rank + 1)
             ordered = sorted(fused, key=lambda i:fused[i], reverse=True)
             selected = []
+            per_video = Counter()
             for idx in ordered:
                 c = self.chunks[idx]
+                # Keep a long lecture from consuming every global result slot.
+                # A per-lecture query still gets all requested windows.
+                if not video_id and c.video_id and per_video[c.video_id] >= 2:
+                    continue
                 duplicate = any(c.video_id and c.video_id == old["chunk"].video_id and
                     max(0, min(c.end, old["chunk"].end) - max(c.start, old["chunk"].start)) /
                     max(1, min(c.end-c.start, old["chunk"].end-old["chunk"].start)) > .6 for old in selected)
@@ -143,6 +148,8 @@ class Retriever:
                     "lexical_coverage":round(coverage.get(idx,0), 3),
                     "query_terms":terms,
                     "semantic_score":round(dense_scores[idx], 3) if idx in dense_scores else None})
+                if c.video_id:
+                    per_video[c.video_id] += 1
                 if len(selected) == top_k:
                     break
             return selected

@@ -1,32 +1,44 @@
 # Validation performed
 
-Date: 16 October 2026 (India time). Python 3.12.
+Date: 16 October 2026. Python 3.12; Node 24.
 
-## Current data status
+## Lecture data
 
-The official A2Z playlist was read live. It contained 315 accessible titled videos and one unavailable/untitled entry, which was excluded. The full accessible title catalog is committed with its retrieval date; playlist positions remain the original positions.
+The official playlist was read live again: **315 accessible titled videos**, with the same IDs as the earlier snapshot. Original playlist positions are preserved. An untitled/unavailable entry is excluded.
 
-The extraction retry checkpoint contains **239/315 saved lectures (75.9%)**, producing 5,421 timed windows. The saved caption cache and prepared index are exported separately from application source. Repeated YouTube request/IP blocks were handled with cooldowns and cached resume; the remaining extraction is still in progress.
+**314/315 lectures (99.7%) are saved**, with **6,933 timed retrieval windows**. Every cached transcript validates against the application schema. The prepared ZIP includes the SQLite index, SHA256 checksum, playlist manifest, coverage, and 314 caption-cache files. Application source and runtime data are distributed separately.
 
-Lecture #113 (`KSsk8AhdOZA`, Ceil in BST) reports disabled captions. Its media download returned a 195-byte HTML “Site Unavailable” page, which is rejected before speech recognition. Lecture #196 had a read timeout and remains queued for retry. The run paused on an IP block at lecture #242. No missing lecture was replaced with fabricated transcript text or timestamps.
+Only playlist #113, `KSsk8AhdOZA`, **L41. Ceil in a Binary Search Tree**, is missing. Its captions report `TranscriptsDisabled`. A fresh audio fallback returned another 195-byte HTML error page, rejected before transcription. No substitute transcript or timestamp was invented. A supplied timestamped caption file or usable local media copy can complete this gap using the documented import/transcribe commands.
 
-The trusted OS CA store resolved the environment's original certificate-chain error; TLS verification was never disabled. Caption requests now have bounded connect/read timeouts.
+Earlier timeouts, proxy failures, and request blocks for #196, #242, #261, #268–270 were resolved on resumed requests. All 13 final playlist entries (#303–315) were saved. HTTPS certificate verification remained enabled.
 
-## Code checks
+## Bugs fixed
 
-- 34 automated tests pass, including all prior regression tests plus playlist positions and series labels, caption-level seek timestamps, summaries, title-only fallback, protection against incidental timestamp matches, coverage reporting, section ingestion, concurrent ingestion, portable export/checksum, malformed catalog handling, new API modes, and no-network serving.
-- The notes-demo retrieval evaluation passes 8/8 cases. The separate live-caption evaluation passes **9/9 cases** (six known lecture/time-window targets and three unrelated-question refusals). This is a small retrieval regression set, not a full-playlist quality score.
-- Python modules compile, frontend JavaScript passes `node --check`, and repository whitespace checks pass.
-- FastAPI test clients verify the website/static assets and API responses. Saved lecture controls and exported source links are implemented in the browser client.
+- Lecture lookup now searches strong title matches directly. Previously, the global top-k could omit the actual lecture and incorrectly fall back to titles or an incidental mention.
+- Global retrieval allows at most two windows per video, leaving room for other relevant lectures. Per-video filtering still returns the requested number of windows. This fixed the merge-sort regression exposed by the larger corpus.
+- Browser storage denial no longer crashes startup or access-key handling; in-memory use remains available.
+- Clicking an earlier citation restores that answer's sources and related lectures together, avoiding stale evidence from a newer answer.
+- Ctrl/Cmd K focuses the composer without discarding the conversation. A separate Shift shortcut starts a new conversation.
+- Caption read timeouts are configurable and bounded. Live playlist refresh records its verification timestamp.
+- Export builds and flushes a temporary archive before atomically replacing the destination. Failed/interrupted exports preserve the previous archive; a regression test verifies this.
 
-Timestamp tests verify the data-to-link mapping. Actual captions may have speech-recognition errors; a link seeks to the best matching subtitle segment with four seconds of lead-in, rather than claiming independently verified audiovisual precision.
+## Checks passed
 
-Additional coverage verifies IDF-weighted lexical evidence, rejection of downloaded HTML error pages, and local-media transcription with preserved input. The expanded 239-lecture retrieval evaluation passes 9/9 cases.
+- **37 Python tests**, including no-network serving, caption-level seek links, truthful title-only fallback, positions/series labels, provider failures, optional backend fixtures, cache/export integrity, interrupted export preservation, direct lecture lookup, and result diversity.
+- **7 frontend DOM integration tests**: startup, search/bookmarks/coverage, per-lecture filters, earlier citations, cancellation, unavailable storage, safe text rendering, and keyboard reset behavior.
+- **18/18 real-caption retrieval cases**: six lecture/time-window targets, nine additional lecture-ID targets from newly saved sections, and three unrelated-query refusals. This is a regression sample, not an exhaustive quality score for every possible question.
+- **8/8 original-notes demo cases**.
+- Prepared-corpus FastAPI smoke checks: 315 library entries, 314 indexed lectures, LRU/LFU, equal partition, odd/even linked list, caption-backed summaries and seek links, and the truthful title-only result for Ceil in BST.
+- JavaScript syntax, Python compilation, HTML/JS element-ID checks, and Git whitespace checks.
 
-Optional dense/Qdrant tests use deterministic fixture vectors and mocked HTTP. LLM tests use mocked responses. The pretrained Whisper `small.en` model was downloaded and loaded. Real media transcription was blocked by the unusable download; the local-media path is tested with a mocked speech model. A real semantic retrieval model, live Qdrant service, or paid LLM key was not used. BM25 and extractive revision require none of them.
+## Interface
+
+The buildless frontend now uses a dark charcoal workspace with mint accents and secondary violet/amber/blue cards. It includes a searchable lecture library, saved view, availability filters, topic shortcuts, visible coverage and missing-lecture details, request cancellation, source tabs, caption excerpts, timestamp-link copying, lecture preview, and responsive library/source drawers. Reduced-motion preferences and keyboard focus styles are supported.
 
 ## Verification limits
 
-Browser rendering was not run because the prescribed browser-control capability was unavailable. Docker image building and external hosting were not run. The FastAPI repository includes Render/Docker deployment configuration; it is not an already deployed public URL.
+DOM checks do not verify visual browser layout. Browser rendering was not run because the prescribed browser-control capability was unavailable. Docker building and external hosting were not run; this is a FastAPI repository with Render/Docker configuration, not a verified public deployment.
 
-For the missing lectures, rerun ingestion on your own laptop/network or import timestamped captions obtained with permission, then rebuild the index. Do not repeatedly retry a known YouTube IP block. For deployment, transfer the prepared database; do not scrape YouTube inside visitor requests.
+Optional dense/Qdrant tests use fixture vectors and mocked HTTP. LLM tests use mocked provider responses; no paid model key was used. The local-media transcription path uses a mocked speech model in tests. Real speech transcription could not run for #113 because the source media response was unusable.
+
+Links seek to the best matching subtitle segment with four seconds of lead-in. Caption text can contain recognition errors; segment matching does not claim independently verified audiovisual precision. With no LLM key, the app returns extractive source recaps; generation, translation, and derived code require a configured provider.

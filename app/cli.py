@@ -5,6 +5,7 @@ import json
 import os
 import sqlite3
 import sys
+import tempfile
 import uuid
 import zipfile
 from datetime import datetime, timezone
@@ -137,15 +138,23 @@ def export_index(settings, output, include_transcripts=False):
                 if transcript.video_id != video_id:
                     raise ValueError(f"Cached transcript identity mismatch: {path.name}")
                 transcript_files.append((path.name, transcript.model_dump_json()))
-    with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as archive:
-        archive.writestr("index.sqlite3",content)
-        archive.writestr("index.sha256",checksum+"  index.sqlite3\n")
-        archive.writestr("coverage.json",json.dumps(metadata.get("coverage",{}),indent=2))
-        archive.writestr("README.txt",readme)
-        if include_transcripts:
-            archive.writestr("playlist.json",json.dumps(metadata.get("playlist",{}),ensure_ascii=False,indent=2))
-            for filename, transcript_json in transcript_files:
-                archive.writestr("transcripts/"+filename,transcript_json)
+    fd, temporary = tempfile.mkstemp(prefix="."+output.name+".",suffix=".tmp",dir=output.parent)
+    try:
+        with os.fdopen(fd,"w+b") as stream:
+            with zipfile.ZipFile(stream, "w", zipfile.ZIP_DEFLATED) as archive:
+                archive.writestr("index.sqlite3",content)
+                archive.writestr("index.sha256",checksum+"  index.sqlite3\n")
+                archive.writestr("coverage.json",json.dumps(metadata.get("coverage",{}),indent=2))
+                archive.writestr("README.txt",readme)
+                if include_transcripts:
+                    archive.writestr("playlist.json",json.dumps(metadata.get("playlist",{}),ensure_ascii=False,indent=2))
+                    for filename, transcript_json in transcript_files:
+                        archive.writestr("transcripts/"+filename,transcript_json)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary,output)
+    finally:
+        Path(temporary).unlink(missing_ok=True)
     return {"archive":str(output),"sha256":checksum,"chunks":len(chunks),
             "lectures":len({c.video_id for c in chunks if c.video_id}),
             "cached_transcripts":len(transcript_files),"bytes":output.stat().st_size}
