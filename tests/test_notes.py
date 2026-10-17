@@ -126,3 +126,12 @@ def test_duplicate_sections_and_injected_references_are_rejected():
     body=draft();body["blocks"][-1]["section"]="overview"
     with pytest.raises(ValueError):render_grounded_draft(json.dumps(body),1,revision=True)
     with pytest.raises(ValidationError):AskRequest(question="binary search",revision_detail="unlimited")
+
+
+def test_incorrect_logarithmic_count_is_repaired_before_notes_are_displayed(lecture,monkeypatch):
+    s,r=lecture;bad=draft();bad["blocks"][0]["text"]="The algorithm terminates in at most ⌈log₂ n⌉ steps."
+    calls=provider(monkeypatch,s,[bad,draft()])
+    result=answer_question(AskRequest(question="binary search",mode="summary"),r,s)
+    assert len(calls)==2 and result["mode"]=="generated"
+    assert "exact upper bound" in calls[1]["messages"][-1]["content"]
+    assert "at most ⌈log₂ n⌉" not in result["answer"]

@@ -216,3 +216,8 @@ test('profile rendering handles invalid storage and treats the name as text',asy
  const a=await setup({stored:{'a2z-profile':JSON.stringify({name:'<img src=x>',goal:7})}});t.after(a.dispose);assert.equal(a.document.querySelector('#profile-name-label img'),null);assert.equal(a.document.getElementById('profile-goal-display').textContent,'Set a study goal for your next revision.');
  const b=await setup({blockedStorage:true});t.after(b.dispose);b.document.getElementById('open-profile').click();b.document.getElementById('learner-name').value='Learner';b.document.getElementById('profile-form').dispatchEvent(new b.window.Event('submit',{cancelable:true}));assert.match(b.document.getElementById('toast').textContent,/this session/);
 });
+test('inline numbered steps and recall bullets render as separate list items',async t=>{
+ const p=result();p.answer='1. Initialize the bounds. 2. Compare the middle. 3. Update a boundary.\n\n- **Caution**: avoid overflow. - **Question**: what shrinks? The search interval.';
+ const a=await setup({ask:async()=>({ok:true,json:async()=>p})});t.after(a.dispose);a.document.getElementById('question').value='binary search';await a.run('askQuestion()');
+ assert.equal(a.document.querySelectorAll('.message.assistant ol li').length,3);assert.equal(a.document.querySelectorAll('.message.assistant ul li').length,2);
+});

@@ -17,6 +17,26 @@ def prose_only(text):
     return re.sub(r"```[\s\S]*?```", "",text).replace("`", "").replace("**", "")
 
 
+def binary_search_issues(question, prose):
+    """Catch the common off-by-one when a logarithmic bound becomes an exact count.
+
+    Restrict literal count checks to an explicitly stated array size and worst case;
+    a particular search trace or the number of halvings can legitimately be smaller.
+    """
+    if not re.search(r"\bbinary search\b",question,re.I):
+        return []
+    errors=[]
+    normalized=prose.replace("₂","2").replace("\u202f"," ").replace("\u00a0"," ")
+    if re.search(r"(?:at most|maximum|worst.case)[^.!?\n]{0,100}(?:⌈|\\lceil|ceil)\s*\\?log[^.!?\n]{0,30}\bn\b[^.!?\n]{0,60}(?:steps|iterations|comparisons)",normalized,re.I):
+        errors.append("Do not state ceil(log2(n)) as the exact upper bound on standard inclusive-interval binary-search iterations. O(log n) is asymptotic; exact counts depend on the loop and comparison convention. Remove or correct the exact-count claim.")
+    for match in re.finditer(r"(?:worst.case|maximum)[^.!\n]{0,140}array\s+(?:of\s+)?size\s+(\d+)\b([^.!\n]{0,180})",normalized,re.I):
+        n=int(match[1])
+        count=re.search(r"(?:=|is|are|takes)\s*(\d+)\s*(?:comparisons|iterations|steps)\b",match[2],re.I)
+        if n>0 and count and int(count[1]) < n.bit_length():
+            errors.append("An exact worst-case count was inferred from log2(n). Standard inclusive-interval binary search can take floor(log2(n))+1 iterations for n>=1; do not confuse iterations, halvings and individual comparisons. Prefer a supported O(log n) recall question.")
+    return errors
+
+
 def answer_issues(question, text, mode="explain"):
     """Check literal partition examples and explicitly requested complexity coverage.
 
@@ -24,7 +44,7 @@ def answer_issues(question, text, mode="explain"):
     claims, program correctness, or that a cited excerpt entails every sentence.
     """
     prose=prose_only(text)
-    errors=[]
+    errors=binary_search_issues(question,prose)
     if (mode == "complexity" or re.search(r"\bcomplexit(?:y|ies)\b|जटिलता",question,re.I)) and not re.search(
             r"\bcomplexit(?:y|ies)\b|\bO\s*\(|जटिलता",prose,re.I):
         errors.append("The question requests complexity. Give the supported bound, or explicitly state that the supplied excerpts do not establish it.")

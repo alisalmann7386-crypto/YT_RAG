@@ -244,7 +244,10 @@ function renderText(root,text,data) {
  const parts=text.split(/```[^\n]*\n([\s\S]*?)```/g);
  parts.forEach((part,i)=>{ if(i%2) { const wrap=node('div','code-block'),pre=node('pre'),button=node('button','copy-code','Copy code');pre.append(node('code','',part));button.onclick=()=>copy(part,'Code copied.');wrap.append(button,pre);root.append(wrap); } else for(const paragraph of part.split(/\n\n+/)) {
   if(!paragraph.trim())continue;
-  const lines=paragraph.trim().split('\n');
+  let formatted=paragraph.trim();
+  if(/^\d+[.)]\s+/.test(formatted))formatted=formatted.replace(/\s+(?=\d+[.)]\s+(?:[A-Z*]))/g,'\n');
+  if(/^[-*]\s+/.test(formatted))formatted=formatted.replace(/\s+(?=-\s+(?:[A-Z*]))/g,'\n');
+  const lines=formatted.split('\n');
   if(data && lines.length>=2 && /^\s*\|?\s*:?-{3,}/.test(lines[1])) {
    const wrap=node('div','answer-table'),table=node('table'),head=node('thead'),body=node('tbody');
    const cells=line=>line.trim().replace(/^\||\|$/g,'').split('|').map(s=>s.trim());
