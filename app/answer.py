@@ -6,7 +6,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.config import Settings
 from app.models import AskRequest
 from app.retrieval import Retriever, tokens
-from app.catalog import lecture_label, load_catalog, locate
+from app.catalog import lecture_label, lecture_reference, load_catalog, locate
+from app.conversation import conversation_topic, resolve_question, topic_terms
 from app.verification import answer_issues, illustration_hint
 
 REFUSAL = "I couldn't find enough evidence in the indexed material. Try a more specific DSA question, select another lecture, or index the relevant transcripts."
@@ -75,14 +76,18 @@ def render_grounded_draft(content, count):
 
 def short_summary(text: str, query_terms=(), limit=360):
     """Select relevant complete sentences; this is extractive, not an LLM claim."""
-    sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+|\n+", text) if s.strip()]
+    sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+|\n+", text)
+                 if s.strip() and re.search(r"[.!?][\"')]*$",s.strip()) and len(s.strip()) <= limit]
     terms = set(query_terms)
     ranked = sorted(enumerate(sentences), key=lambda row:len(set(tokens(row[1])) & terms), reverse=True)
-    chosen = sorted(ranked[:2])
-    result = " ".join(s for _, s in chosen)
-    if len(result) <= limit:
-        return result
-    return result[:limit].rsplit(" ", 1)[0] + "…"
+    chosen, length = [], 0
+    for row in ranked:
+        if length + len(row[1]) + bool(chosen) <= limit:
+            chosen.append(row)
+            length += len(row[1]) + (len(chosen)>1)
+        if len(chosen)==2:
+            break
+    return " ".join(s for _,s in sorted(chosen))
 
 
 def source(hit, number: int, settings: Settings) -> dict:
@@ -99,24 +104,27 @@ def source(hit, number: int, settings: Settings) -> dict:
             score = len(current) + .2 * len(following - current)
             if score > best_score:
                 best_score, matched = score, segment.start
-                summary_text = " ".join(s.text for s in c.segments[i:i+8])
+                summary_text = " ".join(s.text for s in c.segments[max(0,i-2):])
     seek = max(0, int(matched or 0) - settings.rewind)
+    summary = short_summary(summary_text, terms)
+    summary_type = "extractive"
+    if not summary:
+        # ASR captions often contain no sentence boundaries. Do not call an
+        # arbitrary, mid-sentence character cut a recap or invent a paraphrase.
+        title = re.sub(r"^(?:[A-Za-z]+\s*[-.]?\s*\d+\s*[.:]?\s*)", "", c.title).split("|")[0].strip(" .!?")
+        summary = f"This lecture covers {title}. Open the caption match at {stamp(matched)} for the explanation." if c.video_id else f"This study note covers {title}. Read the source passage for the details."
+        summary_type = "title_overview"
     return {"number":number, **c.model_dump(exclude={"segments"}),
         "lecture_label":lecture_label(c.title), "matched_start":matched,
         "timestamp_basis":"subtitle segment" if c.segments else "retrieved window",
-        "summary":short_summary(summary_text, terms), "summary_type":"extractive",
+        "summary":summary, "summary_type":summary_type,
         "url":f"https://www.youtube.com/watch?v={c.video_id}&t={seek}s" if c.video_id else None,
         "seek_seconds":seek if c.video_id else None,
         "score":hit["score"], "lexical_coverage":hit["lexical_coverage"], "semantic_score":hit["semantic_score"]}
 
 
 def retrieval_query(request: AskRequest) -> str:
-    # Only expand very short follow-ups. Never let assistant-generated facts enter evidence.
-    if len(tokens(request.question)) < 2 and request.history:
-        users = [h.content for h in request.history if h.role == "user"]
-        if users:
-            return users[-1] + " " + request.question
-    return request.question
+    return resolve_question(request)
 
 
 def stamp(seconds):
@@ -145,7 +153,14 @@ def extractive(hits, settings, warning=None, request=None):
     answer = "\n\n".join(parts)
     return {"answer":answer, "sources":citations, "grounded":True, "mode":"evidence",
             "retrieved":len(hits), "warning":warning, "locations":[],
-            "summary_type":"extractive"}
+            "summary_type":"title_overview" if any(s["summary_type"]=="title_overview" for s in citations) else "extractive"}
+
+
+def complexity_rank(chunk, space=False):
+    text=chunk.text
+    bounds=len(re.findall(r"\b(?:log(?:arithm\w*)?|big\s+(?:o|of)|constant|target|n\s+(?:into|square|cube))\b|O\s*\(",text,re.I))
+    return (bool(space and re.search(r"\bspace\s+complexity\b",text,re.I)),
+            bool(bounds),len(re.findall(r"\b(?:time|space)\s+complexity\b",text,re.I)),bounds)
 
 
 def complexity_context(request, hits, retriever):
@@ -158,37 +173,59 @@ def complexity_context(request, hits, retriever):
             re.search(r"\bcomplexit(?:y|ies)\b|जटिलता",request.question,re.I)):
         return hits
     video_id=hits[0]["chunk"].video_id
-    present={h["chunk"].id for h in hits}
     pattern=r"\b(?:time|space)\s+complexity\b"
-    candidates=[c for c in retriever.chunks if c.video_id==video_id and c.id not in present and re.search(pattern,c.text,re.I)]
-    candidates.sort(key=lambda c:len(re.findall(pattern,c.text,re.I)),reverse=True)
+    candidates=[c for c in retriever.chunks if c.video_id==video_id and re.search(pattern,c.text,re.I)]
+    space = bool(re.search(r"\b(?:space|memory|auxiliary)\b",request.question,re.I))
+    # Include an actual time bound and an actual space discussion, even if an
+    # introduction repeats the topic more often. Already retrieved sections count.
+    ordered=[]
+    for kind in (["space","time"] if space else ["time","space"]):
+        matching=[c for c in candidates if re.search(rf"\b{kind}\s+complexity\b",c.text,re.I)]
+        ordered.extend(sorted(matching,key=lambda c:complexity_rank(c,kind=="space"),reverse=True)[:1])
+    ordered.extend(sorted(candidates,key=lambda c:complexity_rank(c,space),reverse=True))
     extra=[]
-    for c in candidates:
+    for c in ordered:
+        if any(c.id==h["chunk"].id for h in extra):
+            continue
         if any(max(0,min(c.end,h["chunk"].end)-max(c.start,h["chunk"].start)) >
                .6*min(c.end-c.start,h["chunk"].end-h["chunk"].start) for h in extra):
             continue
-        extra.append({"chunk":c,"score":0.0,"lexical_coverage":0.0,"semantic_score":None,
-                      "query_terms":set(hits[0].get("query_terms",()))|{"space","target"}})
+        existing=next((h for h in hits if h["chunk"].id==c.id),None)
+        extra.append({**(existing or {"score":0.0,"lexical_coverage":0.0,"semantic_score":None}),"chunk":c,
+                      "query_terms":{"space","complexity","log","target"} if space else {"time","complexity","log","target"}})
         if len(extra)==min(2,request.top_k):
             break
-    return hits[:request.top_k-len(extra)]+extra if extra else hits
+    ids={h["chunk"].id for h in extra}
+    return [h for h in hits if h["chunk"].id not in ids][:request.top_k-len(extra)]+extra if extra else hits
 
 
 def _answer_question(request: AskRequest, retriever: Retriever, settings: Settings):
     query = retrieval_query(request)
-    hits = retriever.search(query, request.top_k, request.video_id)
+    retriever.refresh()
     catalog = retriever.metadata.get("playlist") or load_catalog(settings.data_dir)
-    locations = locate(query,catalog,request.top_k,request.video_id)
+    if request.video_id and not topic_terms(query):
+        selected = next((v for v in catalog["videos"] if v["video_id"]==request.video_id), None)
+        if selected:
+            query = selected["title"] + " " + query
+    hits = retriever.search(query, request.top_k, request.video_id)
+    title_query = query if lecture_reference(query) else " ".join(topic_terms(query))
+    locations = locate(title_query,catalog,request.top_k,request.video_id)
+    # An exact but missing/out-of-scope lecture number must not fall through to
+    # an incidental number or topic mention in another lecture's captions.
+    if lecture_reference(query) and not locations:
+        hits = []
     find_lecture = request.mode == "locate" or request.mode == "explain" and bool(re.search(
         r"\b(where|which lecture|which video|kis lecture|kahan|kaha)\b",request.question,re.I))
-    if find_lecture and locations:
+    if locations and (find_lecture or locations[0]["score"] >= 1.35):
         # A passing mention in an unrelated lecture is weaker than a direct title match.
-        best = [v["video_id"] for v in locations if v["score"] >= locations[0]["score"]-.15]
+        best = [v["video_id"] for v in locations if v["score"] >= locations[0]["score"]-.15] if find_lecture else [locations[0]["video_id"]]
         # Search these lectures directly: a global top-k can be filled by passing
         # mentions and exclude every window of the actual lecture.
         focused = []
         for video_id in best:
-            focused.extend(retriever.search(query, request.top_k, video_id))
+            target = next(v for v in locations if v["video_id"]==video_id)
+            focused_query = target["title"] if lecture_reference(query) else query
+            focused.extend(retriever.search(focused_query, request.top_k, video_id))
         focused.sort(key=lambda h:(h["lexical_coverage"], h["score"]), reverse=True)
         focused = focused[:request.top_k]
         if focused or any(c.kind == "lecture" for c in retriever.chunks):
@@ -200,6 +237,11 @@ def _answer_question(request: AskRequest, retriever: Retriever, settings: Settin
             return {"answer":answer,"sources":[],"locations":locations,"grounded":False,
                     "mode":"catalog","retrieved":0,"warning":"Title matches only. No supporting caption match was found for this question, so an in-video timestamp or lecture summary cannot be verified."}
         return {"answer":REFUSAL,"sources":[],"grounded":False,"mode":"refusal","retrieved":0,"warning":None}
+    effective = request.model_copy(update={"question":query})
+    hits=complexity_context(effective,hits,retriever)
+    if request.mode=="complexity" or re.search(r"\bcomplexit(?:y|ies)\b|जटिलता",query,re.I):
+        space=bool(re.search(r"\b(?:space|memory|auxiliary)\b",query,re.I))
+        hits.sort(key=lambda h:complexity_rank(h["chunk"],space),reverse=True)
     if find_lecture:
         return extractive(hits, settings, request=request)
     if settings.provider == "none":
@@ -210,18 +252,18 @@ def _answer_question(request: AskRequest, retriever: Retriever, settings: Settin
     base = "https://api.groq.com/openai/v1" if settings.provider == "groq" else os.getenv("LLM_BASE_URL", "").rstrip("/")
     if not base.startswith(("https://", "http://localhost", "http://127.0.0.1")):
         return extractive(hits, settings, "Language model URL is not configured correctly.")
-    hits=complexity_context(request,hits,retriever)
     context = "\n\n".join(f"[{i+1}] {h['chunk'].title} ({h['chunk'].kind}, {h['chunk'].source})\n{h['chunk'].text[:3500]}" for i,h in enumerate(hits))
     modes = {"explain":"Explain the idea with a small example.","summary":"Give a short revision summary, key idea, and complexity only when supported.","hint":"Give one useful hint only; do not reveal the full solution.",
         "compare":"Compare the requested approaches using the sources.","complexity":"Explain time and auxiliary space complexity when supported.",
         "code":f"Give a concise {request.code_language} implementation derived from the sources and explain complexity."}
-    prompt = f"Study mode: {modes[request.mode]}\nLanguage: {request.language}\nSOURCE EXCERPTS:\n{context}\nQUESTION:\n{request.question}"
-    hint=illustration_hint(request.question)
+    prompt = f"Study mode: {modes[request.mode]}\nLanguage: {request.language}\nSOURCE EXCERPTS:\n{context}"
+    hint=illustration_hint(query)
     if hint and request.mode != "hint":
         prompt += "\nCHECKED ILLUSTRATION (not lecture testimony):\n"+hint
     # Old questions help resolve pronouns, but remain explicitly separate from evidence.
     if request.history:
         prompt += "\nPREVIOUS QUESTIONS (not evidence):\n" + "\n".join(h.content[:600] for h in request.history if h.role == "user")
+    prompt += "\nCURRENT QUESTION (with the user's topic resolved):\n" + query
     structured = settings.provider == "groq" and settings.llm_model in {"openai/gpt-oss-20b","openai/gpt-oss-120b"}
     instructions = INSTRUCTIONS + ("\n"+STRUCTURED_INSTRUCTIONS if structured else "")
     payload = {"model":settings.llm_model,"messages":[{"role":"system","content":instructions},{"role":"user","content":prompt}],
@@ -249,7 +291,7 @@ def _answer_question(request: AskRequest, retriever: Retriever, settings: Settin
                 text = render_grounded_draft(raw,len(hits))
             except ValueError:
                 return extractive(hits, settings, "The model returned incomplete or invalid structured sources. Showing retrieved evidence.")
-        issues=[] if text == "NO_EVIDENCE" else answer_issues(request.question,text,request.mode)
+        issues=[] if text == "NO_EVIDENCE" else answer_issues(query,text,request.mode)
         if not issues:
             break
         if attempt or time.monotonic() >= deadline-2:
@@ -261,16 +303,16 @@ def _answer_question(request: AskRequest, retriever: Retriever, settings: Settin
         if structured:
             payload["reasoning_effort"]="medium"
     if text == "NO_EVIDENCE":
-        return {"answer":REFUSAL,"sources":[],"grounded":False,"mode":"refusal","retrieved":len(hits),"warning":None}
+        return extractive(hits,settings,"Matching sources were found, but the model could not establish the requested explanation from these passages. Read or watch the evidence below.")
     # Numerical array indices inside code are not source references.
-    prose = re.sub(r"```[\s\S]*?```", "", text)
+    prose = re.sub(r"```[\s\S]*?```|`[^`\n]*`", "", text)
     citation_re = r"(?<![\w])\[(\d+)\]"
     cited = list(dict.fromkeys(int(n) for n in re.findall(citation_re, prose)))
     if not cited or any(n < 1 or n > len(hits) for n in cited):
         return extractive(hits, settings, "Generated answer lacked valid source references. Showing retrieved evidence.")
     mapping = {n:i+1 for i,n in enumerate(cited)}
-    pieces = re.split(r"(```[\s\S]*?```)", text)
-    text = "".join(piece if piece.startswith("```") else re.sub(citation_re,
+    pieces = re.split(r"(```[\s\S]*?```|`[^`\n]*`)", text)
+    text = "".join(piece if piece.startswith("`") else re.sub(citation_re,
         lambda m:f"[{mapping[int(m[1])]}]", piece) for piece in pieces)
     citations = [source(hits[n-1], i+1, settings) for i,n in enumerate(cited)]
     return {"answer":text,"sources":citations,"grounded":True,"mode":"generated","retrieved":len(hits),"warning":None}
@@ -284,4 +326,6 @@ def answer_question(request: AskRequest, retriever: Retriever, settings: Setting
         result["locations"] = [v for v in locate(retrieval_query(request),catalog,3,request.video_id)
                                if v["video_id"] not in cited_videos]
     result["requested_mode"] = request.mode
+    result["context_question"] = conversation_topic(request)
+    result["resolved_question"] = retrieval_query(request)
     return result

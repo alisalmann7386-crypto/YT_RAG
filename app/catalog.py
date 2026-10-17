@@ -32,13 +32,34 @@ def lecture_label(title: str):
     return f"{match[1]} {match[2]}" if match else None
 
 
+def lecture_reference(question: str):
+    position = re.search(r"\b(?:playlist|lecture|video)(?:\s+(?:number|no\.?))?\s*#?\s*(\d+)\b", question, re.I)
+    if not position:
+        position = re.fullmatch(r"\s*#?\s*(\d+)\s*", question)
+    if position:
+        return ("position", int(position[1]))
+    series = re.search(r"\b(DP|BS|G|L|Re|T|BT|BST|LL|SL|S)\s*[.\-]?\s*(\d+)\b", question, re.I)
+    return (series[1].lower(), int(series[2])) if series else None
+
+
 def locate(question: str, catalog: dict, top_k: int = 5, video_id=None):
+    reference = lecture_reference(question)
     terms = set(tokens(question))
-    if not terms:
+    if not terms and not reference:
         return []
     matches = []
     for video in catalog["videos"]:
         if video_id and video["video_id"] != video_id:
+            continue
+        if reference:
+            label = lecture_label(video["title"])
+            match = video["playlist_position"] == reference[1] if reference[0] == "position" else bool(
+                label and label.lower() == f"{reference[0]} {reference[1]}")
+            if match:
+                matches.append({**video,"lecture_label":label,
+                    "url":f"https://www.youtube.com/watch?v={video['video_id']}",
+                    "match_basis":"playlist position" if reference[0] == "position" else "series lecture number",
+                    "timestamp_available":False,"score":3.0})
             continue
         words = set(tokens(video["title"])) - {"striver", "a2z", "course", "dsa"}
         overlap = terms & words

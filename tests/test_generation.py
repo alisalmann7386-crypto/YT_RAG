@@ -62,10 +62,11 @@ def test_truncated_output_is_not_treated_as_citation_failure(tmp_path,monkeypatc
     assert result["mode"] == "evidence" and "response limit" in result["warning"]
 
 
-def test_explicit_structured_refusal_is_preserved(tmp_path,monkeypatch):
+def test_model_abstention_keeps_matching_sources_available(tmp_path,monkeypatch):
     s,r,_=prepared(tmp_path,monkeypatch,{"no_evidence":True,"blocks":[]})
     result=answer_question(AskRequest(question="memoization"),r,s)
-    assert result["mode"] == "refusal" and not result["sources"]
+    assert result["mode"] == "evidence" and result["sources"]
+    assert "could not establish" in result["warning"]
 
 
 def test_structured_code_preserves_array_indices(tmp_path,monkeypatch):

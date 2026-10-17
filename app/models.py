@@ -54,6 +54,7 @@ class AskRequest(BaseModel):
     mode: Literal["explain", "locate", "summary", "hint", "compare", "complexity", "code"] = "explain"
     language: Literal["English", "Hinglish", "Hindi"] = "English"
     code_language: Literal["Python", "C++", "Java"] = "Python"
+    context_question: str | None = Field(default=None, max_length=1200)
     history: list[HistoryTurn] = Field(default_factory=list, max_length=6)
 
     @field_validator("question")

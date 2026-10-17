@@ -2,7 +2,7 @@
 
 A deployable study application for [Striver’s A2Z DSA playlist](https://www.youtube.com/playlist?list=PLgUwDviBIf0oF6QL8m22w1hIDC1vJ_BHz). Ask a question, retrieve transcript segments, and open the lecture near the explanation. Generated answers are optional; retrieval works without an LLM key.
 
-**What students get:** ask “Where is binary search taught?” or “Revise distinct subsequences” to see the video title, playlist position, the creator's series label (for example `DP 32`), a timestamp link, and a short extractive recap from indexed captions. Optional LLM explanations add examples, hints and code.
+**What students get:** ask “Where is binary search taught?” or “Revise distinct subsequences” to see the video title, playlist position, the creator's series label (for example `DP 32`), a timestamp link, and a short recap from indexed captions. When captions have no complete sentence boundaries, the fallback is explicitly labeled as a title-based lecture overview, with the original passage available separately. Optional LLM explanations add examples, hints and code.
 
 **Data included in GitHub:** a verified catalog of **315 accessible A2Z videos** (16 October 2026 UTC), plus 22 original DSA revision notes. One unavailable/untitled playlist entry was excluded. The catalog provides genuine lecture links immediately; timestamps and lecture summaries require a prepared caption index. Raw lecture transcripts, API keys and runtime databases are not committed. Coverage is visible in the website and `/api/stats`; no title-only result is presented as a verified timestamp.
 
@@ -21,6 +21,10 @@ A deployable study application for [Striver’s A2Z DSA playlist](https://www.yo
 - BM25 + SQLite without model downloads; optional semantic embeddings and Qdrant.
 - Responsive UI and API on one FastAPI server, network binding, Docker and Render setup.
 - No-evidence refusal, citation validation, provider failure fallback, optional shared access key.
+- Follow-up topic continuity based on user questions, exact playlist-number search (`37`, `Lecture 37`, `#37`) and separate series-label search (`DP 15`).
+- Bold lecture/timestamp labels, direct watch links below answers, best-match versus related-source labels, safe Markdown tables and copyable code blocks.
+- Completed/revise-again markers, progress filters and a Continue studying card that reopens the last selected caption timestamp.
+- Optional conversation history: enable **Settings → Remember conversations** to restore questions, answers, citations and mode/language choices on the same device. History is off by default; up to eight conversations (40 turns each) are retained. Clear history in the History dialog. Bookmarks and revision progress are stored locally regardless; there is no cross-device account sync. No API key is stored with chats.
 
 Independent application, not affiliated with Striver or takeUforward. References identify retrieved evidence; a syntactically valid citation does not prove every generated claim. Verify important answers against the source.
 
@@ -29,8 +33,8 @@ Independent application, not affiliated with Striver or takeUforward. References
 Python 3.11–3.12 recommended; Python 3.12 used for validation.
 
 ```bash
-git clone https://github.com/alisalmann7386-crypto/YT_RAG.git
-cd YT_RAG
+git clone https://github.com/alisalmann7386-crypto/a2z-studyroom.git
+cd a2z-studyroom
 python -m venv .venv
 # Windows PowerShell: .venv\Scripts\Activate.ps1
 # macOS/Linux: source .venv/bin/activate
@@ -159,6 +163,10 @@ curl -X POST http://localhost:8000/api/ask \
 ```
 
 If `APP_API_KEY` is set, add `X-API-Key` or enter it in UI settings. Default UI/API traffic is same-origin. SQLite rate limiting covers search and ask across workers sharing one disk. Separate replicas need a shared limiter.
+
+For a short follow-up, send the prior user topic as `context_question` (maximum 1,200 characters), or the last six turns as `history`. These fields guide topic resolution only, never count as lecture evidence. Explicitly naming a new topic overrides the previous topic. This lightweight heuristic is not unlimited conversation memory; select a lecture or name the topic again when a follow-up is ambiguous.
+
+Complexity and Code modes now supplement a direct lecture match with its explicit complexity sections where available. Without a model key, every mode remains evidence-only: translations, derived code and generated explanations are not promised. If a model abstains despite matching captions, those passages remain visible with a warning instead of disappearing behind a generic refusal.
 
 ## Source layout and checks
 

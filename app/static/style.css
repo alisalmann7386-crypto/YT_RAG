@@ -40,4 +40,79 @@ dialog{background:#141b26;color:var(--text);border:1px solid #344056;border-radi
 .selection-card>small{font-size:11px;font-weight:700;line-height:1.7;color:#b9dec7}
 .source-actions button,.source-actions a{font-size:11px;font-weight:600}
 .source-card summary{font-size:11px;color:#b6d4bc}
+
+/* Revision tools follow the same charcoal/mint workspace, with readable controls. */
+.icon-button{min-width:38px;min-height:38px}
+.section-label{font-size:10px;color:#a0afc6;font-weight:600}
+.library-toolbar select{font-size:11px;color:#aebcd2;min-height:34px}
+.library-search input{font-size:12px}
+.item-text small.progress-label{font-size:10px;font-weight:650;color:#b5c9e5}
+.item-text small.progress-label.completed{color:#b3f4c5}
+.item-text small.progress-label.revise{color:#efcb96}
+.continue-study{display:flex;align-items:center;gap:16px;margin:22px 0;padding:15px 17px;border:1px solid #375443;border-radius:10px;background:linear-gradient(115deg,#1d3025,#151c27)}
+.continue-study>div{flex:1;min-width:0;display:grid;gap:5px}
+.continue-study strong{font-size:13px;line-height:1.5;color:#e8f0fb}
+.continue-study #continue-progress{font-size:11px;color:#a7c7b3}
+.continue-study .primary-link{flex-shrink:0;min-height:40px}
+.source-best{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.5px;color:#c4f5d0;border:1px solid #3b5e48;border-radius:5px;background:#20352a;padding:3px 7px;margin-bottom:12px}
+.revision-actions{display:flex;flex-wrap:wrap;gap:7px;border-top:1px solid #303b4d;margin-top:14px;padding-top:12px}
+.revision-button{flex:1;min-height:36px;border:1px solid #39485e;background:#1b2534;border-radius:7px;color:#c4d3e7;font-size:11px;font-weight:600;padding:7px 10px;white-space:nowrap}
+.revision-button[aria-pressed=true]{border-color:#7aa985;color:#c9fad5;background:#263f2e}
+.revision-button[data-progress-status=revise][aria-pressed=true]{border-color:#a68a59;color:#f7d5a6;background:#3b3020}
+.answer-lectures{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0 4px}
+.answer-lecture{display:grid;gap:5px;max-width:100%}
+.answer-match-label{font-size:10px;font-weight:600;letter-spacing:.4px;color:#9caec8}
+.answer-watch-link{display:flex;align-items:center;min-height:40px;line-height:1.6;border:1px solid #42634d;background:#20372a;border-radius:8px;padding:9px 12px;font-size:12px;font-weight:650;color:#c7f7d2;overflow-wrap:anywhere}
+.answer-watch-link:hover{background:#2d4b36;border-color:#8cbd98}
+.answer-lecture:not(:first-child) .answer-watch-link{background:#182231;border-color:#34445b;color:#c7d6ed}
+.code-block{position:relative;margin:15px 0}
+.code-block pre{margin:0;padding-top:49px;font-size:12px}
+.copy-code{position:absolute;right:8px;top:8px;min-height:30px;padding:5px 9px;border:1px solid #40526a;border-radius:5px;background:#1c2a3c;color:#d7e8fd;font-size:11px;z-index:1}
+.answer-table{overflow-x:auto;border:1px solid #35445b;border-radius:8px;margin:15px 0}
+.answer-table table{border-collapse:collapse;width:100%;font-size:13px;line-height:1.7}
+.answer-table th,.answer-table td{padding:10px 12px;text-align:left;vertical-align:top;border-bottom:1px solid #344158;min-width:130px}
+.answer-table th{background:#1c293a;color:#f0f5ff;font-weight:700}
+.answer-table tr:last-child td{border-bottom:0}
+.message-body h3{font-size:15px;font-weight:700;line-height:1.6;margin:17px 0 8px;color:#f0f5ff}
+.message-body li{margin:5px 0}
+.message-body ul,.message-body ol{padding-left:22px}
+.mode-help{font-size:11px;line-height:1.6;color:#a2b2c9;margin:7px 4px 0}
+.selectors select{font-size:12px;min-height:36px;max-width:158px;padding:7px}
+.send-tools>button{width:38px;height:38px}
+.composer-note{font-size:10px;color:#95a7c1}
+.filter-row{font-size:11px;color:#a3b4cc}
+.filter-row button{font-size:11px;min-height:28px}
+.message-label{font-size:10px;color:#acbcd2;letter-spacing:1.2px}
+.message-meta,.message-meta button{font-size:11px;line-height:1.7}
+.message-meta{color:#a5b8d0}
+.message-meta button{min-height:32px}
+.remember-history{display:flex;align-items:center;gap:10px;min-height:44px;font-size:13px;line-height:1.6;color:#d7e5f7}
+.remember-history input{accent-color:var(--accent);width:18px;height:18px;flex-shrink:0}
+.history-list{display:grid;gap:9px;max-height:52dvh;overflow-y:auto;margin:16px 0}
+.history-entry{width:100%;display:grid;gap:6px;text-align:left;padding:13px;border:1px solid #344359;border-radius:9px;background:#192333;color:#dde9fa;min-height:68px}
+.history-entry:hover{border-color:#8eb29a;background:#20332b}
+.history-entry strong{font-size:13px;font-weight:650;line-height:1.5;overflow-wrap:anywhere}
+.history-entry small{font-size:11px;color:#a4b5cc}
+.history-actions{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.history-actions .subtle-button{font-size:11px;min-height:40px;color:#e3b9ad}
+dialog{max-height:88dvh;overflow-y:auto}
+dialog .muted{font-size:11px;color:#a5b5cb}
+@media(max-width:760px){
+ .top-actions{gap:3px}.topbar .icon-button{min-width:40px;min-height:44px}
+ .breadcrumb{font-size:11px;gap:7px}.connection{display:none}
+ .sources-toggle{min-height:40px;font-size:11px;padding:7px}
+ .library-search input{font-size:16px}.library-toolbar select{font-size:13px;min-height:40px}
+ .library-row>.save-lecture{width:40px;height:44px;margin-right:0}.save-lecture .icon{width:16px;height:16px}
+ .composer textarea{font-size:16px;min-height:66px}.selectors select{font-size:16px;min-height:44px;max-width:158px;padding:8px 5px}
+ .composer-tools{align-items:flex-end}.send-tools>button{width:44px;height:44px}
+ .composer-wrapper{padding-bottom:max(12px,env(safe-area-inset-bottom))}.mode-help{font-size:12px}
+ .filter-row{font-size:11px}.filter-row button{min-height:36px}
+ .message-meta button,.source-actions button,.source-actions a,.revision-button,.answer-watch-link,.copy-code{min-height:44px}
+ .source-actions button,.source-actions a{font-size:12px}.source-card summary{padding:9px 0;min-height:40px}
+ .revision-button{font-size:12px}.continue-study{gap:10px;padding:13px}
+ .continue-study strong{font-size:12px}.continue-study .primary-link{font-size:12px;min-height:44px;padding:8px}
+ .answer-table table{font-size:12px}.answer-lectures{display:grid}
+ .copy-code{min-height:36px}.code-block pre{padding-top:56px}
+ .message-body .result-heading{font-size:14px}.composer-note{font-size:9px}
+}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}

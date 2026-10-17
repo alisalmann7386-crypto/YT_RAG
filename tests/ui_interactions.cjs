@@ -22,16 +22,19 @@ async function setup(options={}) {
  window.HTMLElement.prototype.scrollTo=function(){};
  for(const d of document.querySelectorAll('dialog')){d.showModal=function(){this.open=true;this.setAttribute('open','');};d.close=function(){this.open=false;this.removeAttribute('open');};}
  window.innerWidth=1280;
- const memory=new Map();
+ const memory=options.memory || new Map(Object.entries(options.stored || {})),clipboard=[],downloads=[];
+ window.confirm=()=>options.confirm!==false;
+ class TestURL extends URL {}
+ TestURL.createObjectURL=blob=>{downloads.push(blob);return 'blob:test-download';};TestURL.revokeObjectURL=()=>{};
  for(const name of ['localStorage','sessionStorage']){
   const store={getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,v),removeItem:k=>memory.delete(k)};
   Object.defineProperty(window,name,{configurable:true,get(){if(options.blockedStorage)throw new Error('Storage denied');return store;}});
  }
- const context=vm.createContext({window,document,console,AbortController,Blob,URL,navigator:{clipboard:{writeText:async()=>{}}},setTimeout:(fn,ms)=>{const t=setTimeout(fn,ms);t.unref();timers.add(t);return t;},clearTimeout,
-  fetch:async(path,init)=>{requests.push({path,init});if(path==='/api/stats')return{ok:true,json:async()=>({lectures:1,catalog_lectures:2,unindexed_lectures:1,coverage_percent:50,chunks:10,notes:0,backend:'bm25',llm_provider:'none',corpus:'lecture transcripts'})};if(path==='/api/videos')return{ok:true,json:async()=>({items:library})};return options.ask?options.ask(path,init):{ok:true,json:async()=>result()};}
+ const context=vm.createContext({window,document,console,AbortController,Blob,URL:TestURL,navigator:{clipboard:{writeText:async text=>{clipboard.push(text);}}},setTimeout:(fn,ms)=>{const t=setTimeout(fn,ms);t.unref();timers.add(t);return t;},clearTimeout,
+  fetch:async(path,init)=>{requests.push({path,init});if(path==='/api/stats')return{ok:true,json:async()=>({lectures:1,catalog_lectures:2,unindexed_lectures:1,coverage_percent:50,chunks:10,notes:0,backend:'bm25',llm_provider:'none',corpus:'lecture transcripts'})};if(path==='/api/videos')return{ok:true,json:async()=>({items:options.library || library})};return options.ask?options.ask(path,init):{ok:true,json:async()=>result()};}
  });
  vm.runInContext(script,context); await flush();await flush();
- return {window,document,requests,run:code=>vm.runInContext(code,context),dispose:()=>timers.forEach(clearTimeout)};
+ return {window,document,requests,memory,clipboard,downloads,run:code=>vm.runInContext(code,context),dispose:()=>timers.forEach(clearTimeout)};
 }
 test('bootstrap, search, bookmarks and coverage details',async t=>{
  const a=await setup();t.after(a.dispose);const $=id=>a.document.getElementById(id);
@@ -99,4 +102,90 @@ test('keyboard focus preserves chat; explicit new conversation clears it',async 
  const a=await setup();t.after(a.dispose);const $=id=>a.document.getElementById(id);$('question').value='memoization';await a.run('askQuestion()');
  function key(shiftKey){const e=new a.window.Event('keydown',{bubbles:true,cancelable:true});Object.assign(e,{key:'k',ctrlKey:true,shiftKey});$('question').dispatchEvent(e);}
  key(false);assert.equal(a.run('state.history.length'),2);key(true);assert.equal(a.run('state.history.length'),0);assert.equal($('welcome').hidden,false);assert.equal($('messages').childElementCount,0);
+});
+test('playlist numbers and series labels search precisely',async t=>{
+ const extra=[
+  {id:'11111111111',video_id:'11111111111',title:'4 Sum',playlist_position:37,lecture_label:null,kind:'lecture',indexed:true,duration:100},
+  {id:'22222222222',video_id:'22222222222',title:'Graph DFS',playlist_position:137,lecture_label:'G 12',kind:'lecture',indexed:true,duration:100},
+  {id:'33333333333',video_id:'33333333333',title:'Partition Equal Subset Sum',playlist_position:196,lecture_label:'DP 15',kind:'lecture',indexed:true,duration:100}
+ ];
+ const a=await setup({library:[...library,...extra]});t.after(a.dispose);const input=a.document.getElementById('library-search');
+ for(const [query,title] of [['37','4 Sum'],['Lecture 37','4 Sum'],['#37','4 Sum'],['video number 37','4 Sum'],['DP 15','Partition Equal Subset Sum']]){
+  input.value=query;input.dispatchEvent(new a.window.Event('input'));const rows=a.document.querySelectorAll('.library-item');assert.equal(rows.length,1,query);assert.match(rows[0].textContent,new RegExp(title));
+ }
+});
+test('history is opt-in and restores answers, controls, topic and citations',async t=>{
+ const a=await setup();t.after(a.dispose);const $=id=>a.document.getElementById(id);
+ $('mode').value='code';$('mode').dispatchEvent(new a.window.Event('change'));$('code-language').value='C++';$('language').value='Hindi';
+ $('question').value='Explain memoization';await a.run('askQuestion()');assert.equal(a.memory.has('a2z-conversations'),false);
+ $('remember-history').checked=true;$('remember-history').dispatchEvent(new a.window.Event('change'));
+ assert.equal(JSON.parse(a.memory.get('a2z-conversations')).length,1);
+ const b=await setup({memory:a.memory});t.after(b.dispose);const doc=b.document;
+ assert.equal(b.run('state.history.length'),2);assert.equal(b.run('state.contextQuestion'),'Explain memoization');
+ assert.equal(doc.getElementById('mode').value,'code');assert.equal(doc.getElementById('code-language').value,'C++');assert.equal(doc.getElementById('language').value,'Hindi');assert.equal(doc.getElementById('code-label').hidden,false);
+ doc.querySelector('.cite').click();assert.match(doc.getElementById('player').src,/start=116/);
+ doc.getElementById('question').value='What about its space complexity?';await b.run('askQuestion()');
+ const payload=JSON.parse(b.requests.filter(r=>r.path==='/api/ask').at(-1).init.body);assert.equal(payload.context_question,'Explain memoization');
+ doc.getElementById('open-history').click();assert.ok(doc.getElementById('history-dialog').open);assert.equal(doc.querySelectorAll('.history-entry').length,1);
+});
+test('saved conversations remain independently selectable',async t=>{
+ let n=0;const a=await setup({stored:{'a2z-history-enabled':'true'},ask:async()=>({ok:true,json:async()=>result('Answer '+(++n))})});t.after(a.dispose);const $=id=>a.document.getElementById(id);
+ $('question').value='First topic';await a.run('askQuestion()');$('new-chat').click();$('question').value='Second topic';await a.run('askQuestion()');
+ $('open-history').click();const entries=a.document.querySelectorAll('.history-entry');assert.equal(entries.length,2);entries[1].click();
+ assert.equal(a.run('state.history[0].content'),'First topic');a.document.querySelector('.cite').click();assert.match($('evidence-list').textContent,/Answer 1/);
+});
+test('revision progress and continue studying survive reload',async t=>{
+ const a=await setup();t.after(a.dispose);const $=id=>a.document.getElementById(id);
+ $('library').querySelector('.library-item').click();$('selected-lecture').querySelector('[data-progress-status=completed]').click();
+ $('library-view').value='completed';$('library-view').dispatchEvent(new a.window.Event('change'));assert.equal($('library').querySelectorAll('.library-item').length,1);
+ $('selected-lecture').querySelector('[data-progress-status=revise]').click();assert.equal($('library').querySelectorAll('.library-item').length,0);
+ $('library-view').value='revise';$('library-view').dispatchEvent(new a.window.Event('change'));assert.equal($('library').querySelectorAll('.library-item').length,1);
+ const b=await setup({memory:a.memory});t.after(b.dispose);assert.equal(b.document.getElementById('continue-study').hidden,false);b.document.getElementById('continue-button').click();
+ assert.equal(b.run('state.filter'),'abcdefghijk');assert.equal(b.document.querySelector('[data-progress-status=revise]').getAttribute('aria-pressed'),'true');
+});
+test('direct watch links are deduplicated and title-only matches have no timestamp',async t=>{
+ const payload=result();payload.sources.push({...payload.sources[0],number:2,seek_seconds:140});
+ const a=await setup({ask:async()=>({ok:true,json:async()=>payload})});t.after(a.dispose);a.document.getElementById('question').value='memoization';await a.run('askQuestion()');
+ const links=a.document.querySelectorAll('.answer-watch-link');assert.equal(links.length,1);assert.equal(links[0].href,'https://www.youtube.com/watch?v=abcdefghijk&t=116s');assert.match(links[0].textContent,/Watch from 1:56/);
+ const b=await setup({ask:async()=>({ok:true,json:async()=>({answer:'Playlist #2 — Ceil in BST',mode:'catalog',sources:[],locations:[{video_id:'zzzzzzzzzzz',title:'Ceil in BST',playlist_position:2}]})})});t.after(b.dispose);b.document.getElementById('question').value='ceil';await b.run('askQuestion()');
+ assert.equal(b.document.querySelector('.answer-watch-link').href,'https://www.youtube.com/watch?v=zzzzzzzzzzz');assert.match(b.document.querySelector('.answer-watch-link').textContent,/Open lecture/);
+});
+test('every study mode and language is sent with the selected code language',async t=>{
+ const a=await setup();t.after(a.dispose);const $=id=>a.document.getElementById(id);
+ for(const mode of ['explain','locate','summary','hint','compare','complexity','code']) {
+  $('mode').value=mode;$('mode').dispatchEvent(new a.window.Event('change'));assert.equal($('code-label').hidden,mode!=='code');assert.ok($('mode-help').textContent);
+  for(const language of ['English','Hindi','Hinglish']){
+   $('language').value=language;$('code-language').value='Java';$('question').value='binary search';await a.run('askQuestion()');
+   const payload=JSON.parse(a.requests.filter(r=>r.path==='/api/ask').at(-1).init.body);assert.equal(payload.mode,mode);assert.equal(payload.language,language);assert.equal(payload.code_language,'Java');assert.ok(payload.history.length<=6);
+  }
+ }
+});
+test('comparison tables, code copy and conversation export work without interpreting HTML',async t=>{
+ const payload=result();payload.answer='| Approach | Cost |\n| --- | --- |\n| **Binary search** | `O(log n)` |\n| <img src=x> | Constant space |\n\n```python\nvalues[1] = 2\n```\n\n[1]';
+ const a=await setup({ask:async()=>({ok:true,json:async()=>payload})});t.after(a.dispose);a.document.getElementById('question').value='compare';await a.run('askQuestion()');
+ assert.equal(a.document.querySelectorAll('.answer-table th').length,2);assert.equal(a.document.querySelector('.answer-table img'),null);
+ a.document.querySelector('.copy-code').click();await flush();assert.equal(a.clipboard.at(-1),'values[1] = 2\n');
+ a.document.getElementById('download-chat').click();assert.equal(a.downloads.length,1);const exported=await a.downloads[0].text();assert.match(exported,/Sources:/);assert.match(exported,/https:\/\/www.youtube.com\/watch/);
+});
+test('invalid saved state does not break startup',async t=>{
+ const a=await setup({stored:{'a2z-history-enabled':'true','a2z-conversations':'{"invalid":true}','a2z-progress':'[]','a2z-last-lecture':'{"id":"<script>"}'}});t.after(a.dispose);
+ assert.equal(a.document.getElementById('stat-indexed').textContent,'1');assert.equal(a.run('state.history.length'),0);assert.equal(a.document.getElementById('continue-study').hidden,true);
+});
+test('cleared history is not resurrected by new chat or a late response',async t=>{
+ let finish;const a=await setup({stored:{'a2z-history-enabled':'true'},ask:()=>new Promise(resolve=>finish=()=>resolve({ok:true,json:async()=>result()}))});t.after(a.dispose);const $=id=>a.document.getElementById(id);
+ $('question').value='memoization';const pending=a.run('askQuestion()');assert.equal(a.run('state.sessions.length'),1);
+ $('clear-history').click();finish();await pending;assert.equal(a.memory.has('a2z-conversations'),false);
+ $('new-chat').click();assert.equal(a.run('state.sessions.length'),0);assert.equal(a.memory.has('a2z-conversations'),false);
+ $('question').value='tabulation';const next=a.run('askQuestion()');finish();await next;assert.equal(JSON.parse(a.memory.get('a2z-conversations')).length,1);
+});
+test('malformed saved control values and timestamps fall back safely',async t=>{
+ const session={id:'test',title:'Saved topic',updated:1,turns:[{role:'user',content:'binary search'}],mode:'invalid',language:'invalid',codeLanguage:'invalid'};
+ const a=await setup({stored:{'a2z-history-enabled':'true','a2z-conversations':JSON.stringify([session]),'a2z-last-lecture':JSON.stringify({id:'abcdefghijk',seconds:'broken'})}});t.after(a.dispose);
+ const $=id=>a.document.getElementById(id);assert.equal($('mode').value,'explain');assert.equal($('language').value,'English');assert.equal($('code-language').value,'Python');assert.doesNotMatch($('continue-progress').textContent,/NaN/);
+});
+test('continue studying restores the last opened playback timestamp',async t=>{
+ const a=await setup();t.after(a.dispose);const $=id=>a.document.getElementById(id);
+ $('question').value='memoization';await a.run('askQuestion()');a.document.querySelector('.cite').click();
+ const b=await setup({memory:a.memory});t.after(b.dispose);b.document.getElementById('continue-button').click();
+ assert.match(b.document.getElementById('player').src,/start=116/);assert.equal(b.run('state.lastLecture.seconds'),116);
 });
