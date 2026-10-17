@@ -100,7 +100,9 @@ def test_valid_example_does_not_trigger_an_extra_paid_call(tmp_path,monkeypatch)
 def test_binary_search_exact_count_is_distinct_from_halvings_or_a_trace():
     from app.verification import binary_search_issues
     assert binary_search_issues("binary search","The algorithm terminates in at most ⌈log₂ n⌉ steps.")
+    assert binary_search_issues("binary search","Each step halves the range, leading to at most (log_2 n) steps.")
     assert binary_search_issues("binary search","What is the worst-case number of comparisons for an array of size 64? Answer: ⌈log₂ 64⌉ = 6 comparisons.")
     assert not binary_search_issues("binary search","O(log n) time. For this particular input, finding the middle value takes 1 comparison.")
+    assert not binary_search_issues("binary search","The worst case requires at most O(log n) iterations.")
     assert not binary_search_issues("binary search","The worst-case array size 64 requires 7 iterations.")
     assert not binary_search_issues("binary search","Six halvings reduce a range of 64 elements to one.")

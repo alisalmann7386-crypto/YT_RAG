@@ -27,8 +27,9 @@ def binary_search_issues(question, prose):
         return []
     errors=[]
     normalized=prose.replace("₂","2").replace("\u202f"," ").replace("\u00a0"," ")
-    if re.search(r"(?:at most|maximum|worst.case)[^.!?\n]{0,100}(?:⌈|\\lceil|ceil)\s*\\?log[^.!?\n]{0,30}\bn\b[^.!?\n]{0,60}(?:steps|iterations|comparisons)",normalized,re.I):
-        errors.append("Do not state ceil(log2(n)) as the exact upper bound on standard inclusive-interval binary-search iterations. O(log n) is asymptotic; exact counts depend on the loop and comparison convention. Remove or correct the exact-count claim.")
+    for claim in re.finditer(r"(?:at most|maximum|worst.case)([^.!?\n]{0,100}log[^.!?\n]{0,30}\bn\b[^.!?\n]{0,60}(?:steps|iterations|comparisons))",normalized,re.I):
+        if not re.search(r"\bO\s*\\?\(",claim[1]):
+            errors.append("Do not state log2(n) or ceil(log2(n)) as the exact upper bound on standard inclusive-interval binary-search iterations. O(log n) is asymptotic; exact counts depend on the loop and comparison convention. Remove or correct the exact-count claim.")
     for match in re.finditer(r"(?:worst.case|maximum)[^.!\n]{0,140}array\s+(?:of\s+)?size\s+(\d+)\b([^.!\n]{0,180})",normalized,re.I):
         n=int(match[1])
         count=re.search(r"(?:=|is|are|takes)\s*(\d+)\s*(?:comparisons|iterations|steps)\b",match[2],re.I)
