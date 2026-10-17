@@ -32,7 +32,8 @@ Cover these six sections in order: {headings}.
 Overview: define the problem, goal, input assumptions and prerequisites established by the excerpts.
 Intuition: explain WHY the approach works, including its invariant or state meaning when supported.
 Method: give numbered steps; include DP state, transition, base case and evaluation order only for DP topics where supported. Distinguish approaches actually present in the evidence.
-Name prerequisite algorithms rather than writing ambiguous cross-lecture numbers. Lecture positions and series labels are displayed accurately with the source links.
+Name prerequisite algorithms rather than writing ambiguous cross-lecture numbers. Do not include any lecture, video or playlist numbers in the note text, including recall questions; verified positions and series labels are displayed with the source links.
+Use plain-text formulas in inline code, such as `O(n * target)`, rather than LaTeX commands. A subset-sum take transition must explicitly guard that the current value is no greater than the target sum being considered; never read a negative DP index. Do not present a formula without its applicable conditions.
 Example: give one small, fully worked illustration derived from the supported rule; label it an illustration, not the lecturer's example. Do not invent a trace the evidence cannot support.
 Complexity: separate time from auxiliary space and distinguish iterative/recursive or memoized/tabulated variants only when supported. State missing bounds explicitly.
 Keep asymptotic bounds separate from exact operation counts. Do not convert O(log n) into an exact number of comparisons or claim "at most log2(n) steps" (with or without ceil). Use the asymptotic O(log n) wording when that is what the excerpts establish. Prefer recall questions about the invariant, termination or boundary updates over unsupported exact-count quizzes.

@@ -77,11 +77,16 @@ def answer_issues(question, text, mode="explain"):
     """
     prose=prose_only(text)
     errors=binary_search_issues(question,prose)
+    if mode=="summary" and re.search(r"\b(?:lecture|video|playlist)\s*(?:number\s*)?#?\s*\d+",prose,re.I):
+        errors.append("Remove lecture/video/playlist numbers from revision prose and recall questions. Name the prerequisite algorithm instead; the interface displays verified lecture metadata separately.")
     if (mode == "complexity" or re.search(r"\bcomplexit(?:y|ies)\b|जटिलता",question,re.I)) and not re.search(
             r"\bcomplexit(?:y|ies)\b|\bO\s*\(|जटिलता",prose,re.I):
         errors.append("The question requests complexity. Give the supported bound, or explicitly state that the supplied excerpts do not establish it.")
     if not equal_partition_question(question):
         return errors
+    if re.search(r"dp\s*\[\s*i\s*-\s*1\s*\]\s*\[\s*j\s*-\s*(?:arr|nums|a)\s*\[",prose,re.I) and not re.search(
+            r"\bj\s*(?:>=|≥)|(?:arr|nums|a)\s*\[[^\n]{1,30}?\]\s*(?:<=|≤)\s*j|\bj\s+(?:is\s+)?(?:at least|greater than or equal)|(?:value|element)\s+(?:is\s+)?(?:no greater than|at most|less than or equal)",prose,re.I):
+        errors.append("The subset-sum take transition needs the explicit guard j >= arr[i-1]; otherwise the negative DP index is invalid. State the condition or omit the incomplete formula.")
     # A user-supplied array takes precedence over the model's example.
     supplied=[m for m in re.finditer(LIST,question) if "," in m[0]]
     arrays=list(re.finditer(r"\b(?:array|input|nums)\s*(?:is|=|:)?\s*("+LIST+r")",prose,re.I))

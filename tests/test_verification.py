@@ -21,6 +21,14 @@ def test_screenshot_example_and_missing_complexity_are_rejected():
     assert any("complexity" in e for e in errors)
 
 
+def test_revision_uses_algorithm_names_and_guards_subset_sum_indices():
+    text="Use the routine from lecture\u202f14. dp[i][j] = dp[i-1][j] || dp[i-1][j - arr[i-1]]."
+    errors=answer_issues(QUESTION,text,"summary")
+    assert any("Remove lecture" in e for e in errors) and any("guard" in e for e in errors)
+    fixed="Subset-sum uses dp[i][j] = dp[i-1][j] || dp[i-1][j - arr[i-1]] when j >= arr[i-1]. Complexity is not established."
+    assert not answer_issues(QUESTION,fixed,"summary")
+
+
 def test_correct_duplicate_values_and_equation_are_accepted():
     text="The array [2,3,3,3,4,5] has total sum = 2+3+3+3+4+5 = 20. Its subsets [2,3,5] and [3,3,4] both sum to 10. Time complexity is O(n * target)."
     assert not answer_issues(QUESTION,text)

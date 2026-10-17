@@ -94,8 +94,23 @@ def render_grounded_draft(content, count, revision=False, language="English"):
             raise ValueError("Incomplete code block")
         refs = " ".join(f"[{n}]" for n in dict.fromkeys(block.source_ids))
         heading = "### "+labels(language)[block.section]+"\n\n" if revision else ""
-        parts.append(heading+block.text.strip()+ ("\n\n" if "```" in block.text else " ")+refs)
+        parts.append(heading+readable_math(block.text.strip())+ ("\n\n" if "```" in block.text else " ")+refs)
     return "\n\n".join(parts)
+
+
+def readable_math(text):
+    """Display common formula notation as text without changing code literals."""
+    parts=re.split(r"(```[\s\S]*?```|`[^`\n]*`)",text)
+    for i,part in enumerate(parts):
+        if part.startswith("`"):
+            continue
+        # Models occasionally encode the JSON escape \t instead of a literal
+        # backslash in \times. Only that exact damaged command is repaired.
+        part=part.replace(r"\times","×").replace("\times","×").replace(r"\cdot","·")
+        part=part.replace(r"\log","log").replace(r"\leq","≤").replace(r"\geq","≥")
+        part=re.sub(r"\\[()]", "",part)
+        parts[i]=part
+    return "".join(parts)
 
 
 def short_summary(text: str, query_terms=(), limit=360):
@@ -371,6 +386,8 @@ def _answer_question(request: AskRequest, retriever: Retriever, settings: Settin
                 if hasattr(error,"errors"):
                     # Diagnostic paths only: never copy source text or credentials into feedback.
                     issues.append("Invalid fields: "+", ".join(".".join(map(str,e["loc"])) for e in error.errors(include_input=False)[:6]))
+        else:
+            text=readable_math(raw)
         if not issues and text != "NO_EVIDENCE":
             issues=answer_issues(query,text,request.mode)
             if is_revision and not structured and len(re.findall(r"^#{1,3}\s+",text,re.M))<4:

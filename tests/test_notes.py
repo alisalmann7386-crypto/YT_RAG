@@ -10,6 +10,7 @@ from app.revision import SECTIONS, labels, overlap, revision_context
 from app.store import build_database
 from app.practice import practice_cards
 from app.note_cache import NoteCache
+from app.answer import readable_math
 
 
 @pytest.fixture
@@ -98,6 +99,14 @@ def test_cache_is_bounded_expiring_and_handles_corrupt_json(tmp_path):
         db.execute("UPDATE notes SET body='broken' WHERE key='b'")
         db.execute("UPDATE notes SET created=0 WHERE key='c'")
     assert cache.get("b") is None and cache.get("c") is None
+
+
+def test_math_notation_is_readable_without_modifying_code_literals():
+    assert readable_math(r"Time: \(O(n \times T)\). Space: O(T).") == "Time: O(n × T). Space: O(T)."
+    assert readable_math("O(n \times T)")=="O(n × T)"
+    code='```python\nprint("\\times")\n```'
+    assert readable_math(code)==code
+    assert readable_math('Use `\\times` literally.')=='Use `\\times` literally.'
 
 
 def test_practice_cards_hide_no_sources_and_reuse_validated_sections(lecture,monkeypatch):

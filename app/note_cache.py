@@ -1,10 +1,11 @@
 """Bounded cache of validated revision notes, invalidated by evidence and settings."""
 import hashlib
 import json
+import os
 import sqlite3
 import time
 
-VERSION = "study-notes-7"
+VERSION = "study-notes-8"
 
 
 class NoteCache:
@@ -39,6 +40,6 @@ class NoteCache:
 
 def cache_key(request, query, hits, settings):
     value=[VERSION,query,request.top_k,request.video_id,request.language,request.revision_detail,
-           settings.provider,settings.llm_model,settings.rewind,
+           settings.provider,settings.llm_model,os.getenv("LLM_BASE_URL", "") if settings.provider=="compatible" else "groq",settings.rewind,
            [(h["chunk"].model_dump()) for h in hits]]
     return hashlib.sha256(json.dumps(value,sort_keys=True,ensure_ascii=False).encode()).hexdigest()
