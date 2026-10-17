@@ -286,12 +286,16 @@ def _answer_question(request: AskRequest, retriever: Retriever, settings: Settin
         except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError, AttributeError):
             return extractive(hits, settings, "Language model unavailable or returned an invalid response. Showing retrieved evidence.")
         text=raw
+        issues=[]
         if structured:
             try:
                 text = render_grounded_draft(raw,len(hits))
             except ValueError:
-                return extractive(hits, settings, "The model returned incomplete or invalid structured sources. Showing retrieved evidence.")
-        issues=[] if text == "NO_EVIDENCE" else answer_issues(query,text,request.mode)
+                if attempt or time.monotonic() >= deadline-2:
+                    return extractive(hits, settings, "The model returned incomplete or invalid structured sources after one repair attempt. Showing retrieved evidence.")
+                issues=[f"The JSON response failed source-format validation. Return no more than six blocks, each with nonblank text and a nonempty source_ids array of integer excerpt IDs from 1 to {len(hits)}. No string or boolean IDs. Close every fenced code block. For an abstention, return no_evidence=true and blocks=[]; otherwise no_evidence=false with at least one cited block. Do not include inline [N] citations; the application adds them."]
+        if not issues and text != "NO_EVIDENCE":
+            issues=answer_issues(query,text,request.mode)
         if not issues:
             break
         if attempt or time.monotonic() >= deadline-2:

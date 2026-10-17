@@ -76,3 +76,24 @@ def test_structured_code_preserves_array_indices(tmp_path,monkeypatch):
     result=answer_question(AskRequest(question="Kadane maximum subarray",mode="code"),r,s)
     assert result["mode"] == "generated" and "nums[0]" in result["answer"]
     assert "```\n\n[1]" in result["answer"]
+
+
+def test_malformed_structured_sources_get_one_bounded_repair(tmp_path,monkeypatch):
+    s,r,_=prepared(tmp_path,monkeypatch,{})
+    calls=[]
+    def post(url,**kwargs):
+        calls.append(kwargs["json"])
+        body={"no_evidence":False,"blocks":[{"text":"Memoization caches computed states.","source_ids":[1] if len(calls)>1 else []}]}
+        return httpx.Response(200,request=httpx.Request("POST",url),json={"choices":[{"finish_reason":"stop","message":{"content":json.dumps(body)}}]})
+    monkeypatch.setattr(httpx,"post",post)
+    result=answer_question(AskRequest(question="memoization"),r,s)
+    assert len(calls)==2 and result["mode"]=="generated"
+    assert "source-format validation" in calls[1]["messages"][-1]["content"]
+    assert result["sources"] and "[1]" in result["answer"]
+
+
+def test_persistently_malformed_sources_stop_after_two_calls(tmp_path,monkeypatch):
+    s,r,calls=prepared(tmp_path,monkeypatch,{"no_evidence":False,"blocks":[{"text":"Uncited","source_ids":[]}]})
+    result=answer_question(AskRequest(question="memoization"),r,s)
+    assert len(calls)==2 and result["mode"]=="evidence"
+    assert "after one repair attempt" in result["warning"] and result["sources"]
