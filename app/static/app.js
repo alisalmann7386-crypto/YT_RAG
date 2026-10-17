@@ -119,11 +119,20 @@ function setEvidence(data,tab) {
  renderSources(sources); renderLocations(locations); if (!sources.length && locations.length) $('evidence-list').append(node('p','no-sources','No supporting caption excerpt for this question. See Related lectures for title matches.'));
  showEvidenceTab(tab || (sources.length ? 'sources' : locations.length ? 'lectures' : 'sources'));
 }
-function inlineText(root,text,data) {
+function inlineText(root,text,data,allowEmphasis=true) {
  const sources=data?.sources||[]; let cursor=0;
- for (const match of text.matchAll(/(?<![\w])\[(\d+)\]/g)) {
-  root.append(document.createTextNode(text.slice(cursor,match.index))); const id=Number(match[1]),s=sources.find(s=>s.number===id);
-  if (s) { const b=node('button','cite',id); b.setAttribute('aria-label','Read source '+id); b.onclick=()=>{ setEvidence(data); sourceView(s,$('evidence-list').querySelector('[data-number="'+id+'"]')); }; root.append(b); } else root.append(document.createTextNode(match[0]));
+ // A small text-only renderer: formatting never evaluates model/caption HTML.
+ const pattern=/\*\*((?:[^*\n]|\*(?!\*))+?)\*\*|`([^`\n]+)`|(?<![\w])\[(\d+)\]|(\b(?:Playlist\s*#\s*\d+|(?:lecture|video)(?:\s+number)?\s*#?\s*\d+|(?:DP|BS|G|L)\s*\.?\s*\d+)\b|#\s*\d+\b)|(\b\d{1,3}:[0-5]\d(?::[0-5]\d)?\b)/gi;
+ for (const match of text.matchAll(pattern)) {
+  root.append(document.createTextNode(text.slice(cursor,match.index)));
+  if (match[1] && allowEmphasis && data) { const strong=node('strong'); inlineText(strong,match[1],data,false); root.append(strong); }
+  else if (match[2] && data) root.append(node('code','',match[2]));
+  else if (match[3]) {
+   const id=Number(match[3]),s=sources.find(s=>s.number===id);
+   if (s) { const b=node('button','cite',id); b.setAttribute('aria-label','Read source '+id); b.onclick=()=>{ setEvidence(data); sourceView(s,$('evidence-list').querySelector('[data-number="'+id+'"]')); }; root.append(b); }
+   else root.append(document.createTextNode(match[0]));
+  } else if (data && (match[4] || match[5])) root.append(node('strong',match[4] ? 'lecture-reference' : 'timestamp-reference',match[0]));
+  else root.append(document.createTextNode(match[0]));
   cursor=match.index+match[0].length;
  }
  root.append(document.createTextNode(text.slice(cursor)));
@@ -131,7 +140,15 @@ function inlineText(root,text,data) {
 function renderText(root,text,data) {
  // Render untrusted model/caption text as text nodes, never HTML.
  const parts=text.split(/```[^\n]*\n([\s\S]*?)```/g);
- parts.forEach((part,i)=>{ if(i%2) { const pre=node('pre'); pre.append(node('code','',part)); root.append(pre); } else for(const paragraph of part.split(/\n\n+/)) { if(!paragraph.trim())continue; const p=node('p'); inlineText(p,paragraph,data); root.append(p); } });
+ parts.forEach((part,i)=>{ if(i%2) { const pre=node('pre'); pre.append(node('code','',part)); root.append(pre); } else for(const paragraph of part.split(/\n\n+/)) {
+  if(!paragraph.trim())continue;
+  const p=node('p'),lineEnd=paragraph.indexOf('\n'),heading=lineEnd<0 ? paragraph : paragraph.slice(0,lineEnd);
+  if ((data?.mode==='evidence' || data?.mode==='catalog') && /^Playlist\s*#\d+\b/.test(heading)) {
+   const title=node('strong','result-heading'); inlineText(title,heading,data); p.append(title);
+   if (lineEnd>=0) inlineText(p,paragraph.slice(lineEnd+1),data);
+  } else inlineText(p,paragraph,data);
+  root.append(p);
+ } });
 }
 function scrollConversation() { const scroller=$('conversation-scroll'); scroller.scrollTo({top:scroller.scrollHeight,behavior:'smooth'}); }
 function message(role,text,data) {

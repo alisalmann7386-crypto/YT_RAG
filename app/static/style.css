@@ -16,4 +16,28 @@ dialog{background:#141b26;color:var(--text);border:1px solid #344056;border-radi
 @media(max-width:1080px){:root{--sidebar:270px}.workspace{grid-template-columns:minmax(0,1fr)}.evidence-panel{display:none;position:fixed;inset:72px 0 0 auto;width:min(400px,100%);z-index:24;box-shadow:-20px 0 60px #0006}.evidence-panel.open{display:flex}.evidence-heading>.icon-button{display:inline-flex}.sources-toggle{display:inline-flex;align-items:center;gap:6px;border:1px solid #354431;border-radius:6px;background:#1a271c;color:var(--accent);font-size:10px;padding:6px 9px}.sources-toggle .icon{width:13px;height:13px}.sources-toggle>span{font-size:8px;color:#77977b}.welcome{padding:44px 42px 25px;max-width:740px}h1{font-size:44px}.stats-strip{gap:22px}.prompt-card{padding:19px;min-height:149px}.composer-wrapper{padding:12px 35px 20px}.composer-note>span:last-child{display:flex}.evidence-scroll{padding:0 22px 22px}.evidence-heading{padding-left:22px;padding-right:22px}.evidence-tabs{padding:0 22px}.messages{padding:30px 38px 4px}.connection{font-size:9px}.top-actions{gap:8px}}
 @media(max-width:760px){:root{--sidebar:282px}.sidebar{transform:translateX(-100%);transition:transform .22s;box-shadow:15px 0 60px #0006;padding:24px 17px 0}.sidebar.open{transform:translateX(0)}main{margin-left:0;width:100%}.mobile-menu{display:inline-flex}.desktop-book{display:none}.topbar{height:60px;padding:0 16px}.workspace{height:calc(100dvh - 60px)}.evidence-panel{top:60px}.breadcrumb{gap:9px;font-size:10px}.breadcrumb>span:first-of-type,.breadcrumb .slash{display:none}.top-actions{gap:6px}.connection{font-size:8px;margin-right:5px}.welcome{padding:34px 25px 22px;max-width:640px}.eyebrow{font-size:7px;letter-spacing:1.4px}h1{font-size:40px;letter-spacing:-1.8px;margin-top:19px}.hero-spark{width:23px;height:23px}.welcome-description{font-size:11px}.stats-strip{margin:24px 0;padding:17px 0;gap:10px}.stats-strip strong{font-size:22px}.stats-strip div>span{font-size:8px}.prompt-card{min-height:142px;padding:16px}.composer-wrapper{padding:10px 17px 15px}.composer textarea{font-size:12px;padding-top:14px;min-height:65px}.composer-note{font-size:7px}.composer-note>span:last-child{display:none}.filter-row{font-size:8px}.messages{padding:25px 24px 4px}.message-body{font-size:12px}.topic-chips button{font-size:9px}.connection.offline{max-width:110px}.evidence-panel.open{width:min(400px,calc(100% - 12px))}.section-intro h2{font-size:11px}.source-card h3{font-size:12px}.source-card>p{font-size:11px}}
 @media(max-width:390px){h1{font-size:34px}.topbar{padding:0 10px}.connection{display:none}.welcome{padding:29px 20px 20px}.prompt-grid{gap:8px}.prompt-card{padding:13px;min-height:140px}.prompt-card strong{font-size:11px}.card-label{font-size:6px}.stats-strip div>span{font-size:7px}.topic-chips button{padding:5px 7px}.selectors{gap:4px}.selectors select{max-width:108px;font-size:8px}.composer-tools{padding-left:9px;padding-right:9px}}
+
+/* Make the lecture and moment easy to spot in every result, including mobile. */
+.message-body{font-size:14px;font-weight:450;line-height:1.85;color:#d9e2f1}
+.message-body strong{font-weight:700;color:#f4f7ff}
+.message-body .lecture-reference{color:#c5f8d4}
+.message-body .timestamp-reference{color:#e0ecff;font-variant-numeric:tabular-nums}
+.message-body .result-heading{display:block;margin-bottom:8px;line-height:1.65}
+.message-body>p{margin:14px 0}
+.message-body p>code,.message-body strong>code{padding:2px 5px;border:1px solid #354358;border-radius:4px;background:#171f2d;color:#d0f5df;font-size:.9em}
+.cite{font-size:10px;font-weight:700;line-height:21px}
+.item-symbol{font-size:11px;font-weight:700;color:#c5f8d4;background:#1b2b24;border-color:#3d5948}
+.item-title{font-size:12px;font-weight:600;color:#d6deeb}
+.library-item.active .item-title{color:var(--accent)}
+.item-text small{font-size:10px;color:#a3b1c5}
+.item-text small.indexed{color:#a4ceb6}
+.source-top{font-size:11px;font-weight:700;line-height:1.6;color:#d2e0f2;flex-wrap:wrap}
+.source-number{font-size:11px;font-weight:700}
+.source-card h3{font-size:14px;font-weight:700;color:#f0f5ff;line-height:1.65}
+.source-card>p,.source-card details p{font-size:12px;color:#c4d0e2;line-height:1.85}
+.timestamp-detail,.source-range{font-size:10px;line-height:1.7;color:#a2b3c9}
+.catalog-card small{font-size:11px;font-weight:700;line-height:1.6;color:#dbceff}
+.selection-card>small{font-size:11px;font-weight:700;line-height:1.7;color:#b9dec7}
+.source-actions button,.source-actions a{font-size:11px;font-weight:600}
+.source-card summary{font-size:11px;color:#b6d4bc}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}

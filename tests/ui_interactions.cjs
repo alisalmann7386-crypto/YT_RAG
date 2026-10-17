@@ -64,9 +64,36 @@ test('unavailable storage does not prevent startup or session bookmarks',async t
  assert.equal($('stat-indexed').textContent,'1');$('library').querySelector('.save-lecture').click();assert.equal($('saved-count').textContent,'1');assert.match($('toast').textContent,/Browser storage is unavailable/);
 });
 test('source and model text cannot inject HTML',async t=>{
- const payload=result('<img src=x onerror=alert(1)>');payload.answer='<script>alert(1)</script> [1]';
+ const payload=result('<img src=x onerror=alert(1)>');payload.answer='**<script>alert(1)</script>** [1]';
  const a=await setup({ask:async()=>({ok:true,json:async()=>payload})});t.after(a.dispose);a.document.getElementById('question').value='memoization';await a.run('askQuestion()');
  assert.equal(a.document.querySelector('#messages script'),null);assert.equal(a.document.querySelector('#evidence-list img'),null);assert.match(a.document.getElementById('evidence-list').textContent,/<img/);
+ assert.equal(a.document.querySelector('#messages strong').textContent,'<script>alert(1)</script>');
+});
+test('lecture search results emphasize the lecture, title and timestamp',async t=>{
+ const payload=result('Binary Search');payload.answer='Playlist #37 · BS 2 · 7:45 — Binary Search\nSearch a sorted array. [1]';
+ const a=await setup({ask:async()=>({ok:true,json:async()=>payload})});t.after(a.dispose);a.document.getElementById('question').value='where is binary search taught';await a.run('askQuestion()');
+ const body=a.document.querySelector('.message.assistant .message-body');
+ assert.equal(body.querySelector('strong.result-heading').textContent,'Playlist #37 · BS 2 · 7:45 — Binary Search');
+ assert.equal(body.querySelector('.lecture-reference').textContent,'Playlist #37');
+ assert.equal(body.querySelector('.timestamp-reference').textContent,'7:45');
+ assert.match(body.textContent,/Search a sorted array/);assert.equal(body.querySelectorAll('.cite').length,1);
+});
+test('generated emphasis keeps citations clickable and inline code literal',async t=>{
+ const payload=result();payload.mode='generated';payload.answer='**Binary search [1]** is in Lecture number 37 at 07:45. Complexity: **O(n * target)**. Use `dp[1]` and `**Lecture 37**`.';
+ const a=await setup({ask:async()=>({ok:true,json:async()=>payload})});t.after(a.dispose);const $=id=>a.document.getElementById(id);$('question').value='binary search';await a.run('askQuestion()');
+ const body=a.document.querySelector('.message.assistant .message-body');
+ assert.match(body.querySelector('strong').textContent,/Binary search/);
+ assert.equal(body.querySelector('.lecture-reference').textContent,'Lecture number 37');
+ assert.equal(body.querySelector('.timestamp-reference').textContent,'07:45');
+ assert.ok([...body.querySelectorAll('strong')].some(s=>s.textContent==='O(n * target)'));
+ assert.equal(body.querySelectorAll('.cite').length,1);assert.deepEqual([...body.querySelectorAll('code')].map(c=>c.textContent),['dp[1]','**Lecture 37**']);
+ body.querySelector('.cite').click();assert.match($('player').src,/start=116/);
+});
+test('code blocks preserve numbers and formatting characters without citations',async t=>{
+ const payload=result();payload.answer='```python\n# Lecture 37 at 7:45\ndp[1] = "**memoization**"\n```';
+ const a=await setup({ask:async()=>({ok:true,json:async()=>payload})});t.after(a.dispose);a.document.getElementById('question').value='code';await a.run('askQuestion()');
+ const body=a.document.querySelector('.message.assistant .message-body');
+ assert.equal(body.querySelectorAll('strong,.cite').length,0);assert.equal(body.querySelector('pre code').textContent,'# Lecture 37 at 7:45\ndp[1] = "**memoization**"\n');
 });
 test('keyboard focus preserves chat; explicit new conversation clears it',async t=>{
  const a=await setup();t.after(a.dispose);const $=id=>a.document.getElementById(id);$('question').value='memoization';await a.run('askQuestion()');
