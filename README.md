@@ -28,6 +28,23 @@ A deployable study application for [Striver’s A2Z DSA playlist](https://www.yo
 - Quick Revision creates six sections: topic/goal, intuition, steps/recurrence, a worked illustration, time/space complexity, and implementation cautions plus recall questions with answers. Choose **Concise notes** or **Exam-ready notes**. Notes sample distinct teaching sections from the best matching lecture, including its later complexity discussion, and retain clickable source references. Copy/download a single set of notes as Markdown with lecture links.
 - Use **Make revision notes**, **Time & space**, **Explain a step** or **Show code** below an answer to study that answer's lecture, including older answers. The visible lecture filter shows the selected scope.
 - Click the **S avatar** at the bottom of the library to open your learner profile. Set a display name and study goal, and see completed/revise-again/bookmark counts. The profile is stored in the current browser; it does not create an online account.
+- **My notes** saves up to 40 sets of revision notes independently of chats, with topic categories, searchable personal annotations, per-note downloads and original lecture references.
+- **Quiz me / Practice** turns the six cited note sections into recall cards. Type an attempt, reveal the answer, then choose **Revise again** (10 minutes) or **Got it** (1, 3, 7, 14, then 30 days). The due queue and weak-topic view use your own ratings; this is not automatic assessment. Up to 160 cards are kept locally. Without a model, reading/recall cards show original caption passages explicitly.
+- Follow-ups such as **Explain step 3**, **Why iterate backwards?** and **Show the recursive version** retain the previous topic and lecture. Prior generated text is only conversation context for identifying a step, never retrieval evidence. Named new topics and exact lecture references can switch context.
+- **Settings → Study backup** exports/imports notes, annotations, cards, profile, bookmarks and progress as JSON. Import validates and merges data; existing note IDs are preserved. Chats and access keys are excluded. This provides manual device transfer; automatic account sync requires a separate authentication/database service and is not configured.
+- Validated generated revision notes are cached server-side for seven days (128 entries maximum). The key includes the full resolved request, language/detail, model, source contents and cache version. Failed generation, source extracts and title-only results are never cached as generated notes. On ephemeral hosting, this cache can reset on deploy/restart; no reindex is required.
+- Curated typo/Hinglish/Hindi query aliases and combining-mark-aware tokenisation improve common search variants without silently rewriting arbitrary unknown words.
+
+The complete retrieval workflow can be checked without any LLM calls:
+
+```bash
+python -m pytest -q
+node --test tests/ui_interactions.cjs
+python -m app.cli eval --file tests/fixtures/study_queries.json --pipeline
+python -m app.cli eval --file data/eval_lectures.json
+```
+
+The 48-case workflow fixture checks primary lecture selection, follow-ups, typos, bilingual queries, unsupported topics and missing captions. The separate 18-case fixture checks raw passage retrieval, including six time windows. These are regression samples, not comprehensive accuracy estimates. BM25 is still the deployed default. Hybrid search requires the optional semantic dependencies and a matching rebuilt index; run the same fixtures on both backends before changing production. This update does not claim a measured hybrid-search improvement.
 
 Independent application, not affiliated with Striver or takeUforward. References identify retrieved evidence; a syntactically valid citation does not prove every generated claim. Verify important answers against the source.
 

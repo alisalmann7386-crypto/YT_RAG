@@ -2,6 +2,16 @@
 
 Updated: 17 October 2026. Python 3.12; Node 24. Playlist/data figures below were verified on 16 October; this update changes application code, not the prepared corpus.
 
+## Personal study workspace update
+
+The latest local checks pass **129 backend tests**, **34 frontend DOM tests**, **48/48 complete retrieval-flow cases** and the existing **18/18 raw-caption retrieval cases**. The workflow benchmark forces the model provider off, so it does not incur generation charges. It includes literal step references, backwards-iteration follow-ups, pinned prior lectures, explicit topic switches, exact playlist and series numbers, common misspellings, Hinglish/Hindi, missing captions and unrelated questions. Hindi tests exposed Python word-token splitting of vowel marks; tokenisation now keeps Unicode letters, numbers and combining marks together. Practice endpoint tests also cover authentication and truthful missing-caption responses.
+
+New tests verify generated-note cache reuse and invalidation for language/detail/evidence changes, cache expiry/size/corruption, rejection of invalid/fallback generations from the cache, six cited practice cards, truthful caption-only practice, untrusted prior-answer context, independent saved notes, annotation reload/search, reveal-before-rating practice, rating persistence, safe backup merge, invalid import handling and corrupt local state. Profile, bookmarks, existing notes and review progress remain on-device. Backup import/export offers manual transfer; automatic login/sync is not configured.
+
+The review schedule is based on learner self-assessment, not an automatic correctness grade. Source validity and the existing narrow arithmetic checks cannot establish that every model explanation is correct. Practice reuses the cited sections instead of asking a model to invent distractors or certify an answer. The cache stores only accepted generated revision notes, with all evidence and presentation inputs in its versioned key; it is not a cache of personal profiles or chat history. It is bounded to 128 entries of at most 200 KB each and seven days, and may reset with ephemeral hosting.
+
+BM25 remains enabled. Semantic/Qdrant fixture tests pass, but real semantic dependencies/vectors are not installed in this environment, so no live hybrid-vs-BM25 quality or memory benchmark is claimed. Missing lecture #113 is unchanged. Earlier sections below document previous verification stages; the counts above supersede their earlier totals.
+
 ## Lecture data
 
 The official playlist was read live again: **315 accessible titled videos**, with the same IDs as the earlier snapshot. Original playlist positions are preserved. An untitled/unavailable entry is excluded.

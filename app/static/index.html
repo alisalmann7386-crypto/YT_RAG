@@ -5,7 +5,7 @@
  <meta name="description" content="Your Striver A2Z DSA workspace. Find lectures, jump to caption-backed timestamps, and revise with cited summaries.">
  <title>A2Z Studyroom · Find your next breakthrough</title>
  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%23b3f4c5'/%3E%3Ctext x='8' y='28' fill='%230b0e14' font-size='24' font-family='Arial'%3EA%3C/text%3E%3C/svg%3E">
- <link rel="stylesheet" href="/static/style.css?v=20261017-revision6"><script src="/static/app.js?v=20261017-revision6" defer></script>
+ <link rel="stylesheet" href="/static/style.css?v=20261017-study7"><script src="/static/study.js?v=20261017-study7" defer></script><script src="/static/app.js?v=20261017-study7" defer></script>
 </head>
 <body>
  <svg class="icon-defs" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
@@ -33,6 +33,7 @@
   <aside class="sidebar" id="sidebar" aria-label="Lecture library">
    <a class="brand" href="/"><span class="brand-icon">a<span>2</span>z<span class="brand-dot">.</span></span><span>Studyroom<small>STRIVER’S A2Z DSA</small></span><span class="brand-tag">RAG</span></a>
    <button id="new-chat" class="new-chat"><svg class="icon"><use href="#i-plus"/></svg> New conversation <kbd>⇧ ⌘ K</kbd></button>
+   <div class="study-hub"><button id="open-notes"><svg class="icon"><use href="#i-book"/></svg> My notes <span id="notes-count">0</span></button><button id="open-practice"><svg class="icon"><use href="#i-spark"/></svg> Practice <span id="review-count">0</span></button></div>
    <div class="sidebar-section"><span>YOUR WORKSPACE</span><span class="tiny-dot"></span></div>
    <div class="library-tabs" role="group" aria-label="Library view"><button id="tab-all" class="active" aria-pressed="true"><svg class="icon"><use href="#i-book"/></svg> All lectures <span id="library-total">—</span></button><button id="tab-saved" aria-pressed="false"><svg class="icon"><use href="#i-save"/></svg> Saved <span id="saved-count">0</span></button></div>
    <div class="library-search"><svg class="icon"><use href="#i-search"/></svg><input id="library-search" placeholder="Search lectures…" aria-label="Search lectures"><kbd>/</kbd></div>
@@ -107,7 +108,19 @@ python -m app.cli serve</pre><p>Rerunning resumes cached work. Missing or blocke
   <div class="profile-intro"><span id="profile-large-avatar" class="mini-avatar">S</span><div><strong id="profile-display-name">DSA learner</strong><p id="profile-goal-display">Set a study goal for your next revision.</p></div></div>
   <div class="profile-stats" aria-label="Your study progress"><div><strong id="profile-completed">0</strong><span>Completed</span></div><div><strong id="profile-revise">0</strong><span>Revise again</span></div><div><strong id="profile-saved">0</strong><span>Bookmarked</span></div></div>
   <div class="profile-progress"><span id="profile-progress-label">0 lectures completed</span><progress id="profile-progress" value="0" max="315" aria-label="Completed playlist lectures"></progress></div>
-  <form id="profile-form"><label for="learner-name">Display name</label><input id="learner-name" maxlength="60" autocomplete="nickname" placeholder="Your name"><label for="learner-goal">Study goal</label><input id="learner-goal" maxlength="140" placeholder="For example, revise dynamic programming this week"><p class="muted">Your profile and progress stay in this browser. Use the same browser and device to continue.</p><button type="submit" class="primary-link">Save profile</button></form>
+  <form id="profile-form"><label for="learner-name">Display name</label><input id="learner-name" maxlength="60" autocomplete="nickname" placeholder="Your name"><label for="learner-goal">Study goal</label><input id="learner-goal" maxlength="140" placeholder="For example, revise dynamic programming this week"><p class="muted">Your study data stays in this browser. Use Study backup in Settings to move notes and progress to another device.</p><button type="submit" class="primary-link">Save profile</button></form>
+ </dialog>
+ <dialog id="notes-dialog" class="study-dialog" aria-labelledby="notes-heading">
+  <div class="dialog-heading"><div><span class="section-label">YOUR PERSONAL REFERENCE</span><h2 id="notes-heading">My revision notes</h2></div><button data-close class="icon-button" aria-label="Close notes"><svg class="icon"><use href="#i-close"/></svg></button></div>
+  <p class="muted">Saved independently of chat history. Add your own annotations and find them by topic.</p>
+  <div class="notes-filters"><input id="notes-search" type="search" aria-label="Search saved notes" placeholder="Search topics, notes or annotations…"><select id="notes-category" aria-label="Filter notes by category"><option value="">All topics</option></select></div>
+  <div class="notes-workspace"><div id="notes-list" class="notes-list"></div><div id="note-detail" class="note-detail"><p>Save revision notes from an answer to build your personal reference.</p></div></div>
+ </dialog>
+ <dialog id="practice-dialog" class="study-dialog" aria-labelledby="practice-heading">
+  <div class="dialog-heading"><div><span class="section-label">RECALL BEFORE YOU REVEAL</span><h2 id="practice-heading">Lecture practice</h2></div><button data-close class="icon-button" aria-label="Close practice"><svg class="icon"><use href="#i-close"/></svg></button></div>
+  <p class="muted">Answer in your own words, reveal the cited notes, then assess yourself. Your rating schedules the next review.</p>
+  <div class="practice-toolbar"><button id="practice-current" class="primary-link">Practice current topic</button><button id="practice-due" class="subtle-button">Review due cards</button><button id="practice-weak" class="subtle-button">Revise weak topics</button><span id="practice-status" role="status"></span></div><p id="practice-overview" class="muted"></p>
+  <div id="practice-content"><p>Find a lecture or save notes, then start a practice session.</p></div>
  </dialog>
  <div id="toast" class="toast" role="status" hidden></div>
 </body>

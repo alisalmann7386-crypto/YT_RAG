@@ -7,6 +7,7 @@ from app.config import Settings
 from app.models import AskRequest, Chunk
 from app.retrieval import Retriever
 from app.store import build_database
+from app.conversation import is_followup
 
 
 @pytest.fixture
@@ -63,6 +64,41 @@ def test_new_unrelated_topic_is_not_rescued_by_old_context(course):
     s,r,_=course
     result=answer_question(AskRequest(question="cricket world cup results",context_question="partition equal subset sum"),r,s)
     assert result["mode"]=="refusal" and not result["sources"]
+
+
+@pytest.mark.parametrize("question",["Explain step 3","Why iterate backwards?","Show the recursive version","What about the base case?","Explain line 2"])
+def test_specific_study_followups_keep_topic_and_lecture(course,question):
+    s,r,_=course
+    req=AskRequest(question=question,context_question="partition equal subset sum",context_video_id="abcdefghijk")
+    assert is_followup(question)
+    result=answer_question(req,r,s)
+    assert {v["playlist_position"] for v in result["sources"]}=={196}
+
+
+def test_named_new_topic_ignores_followup_lecture_pin(course):
+    s,r,_=course
+    result=answer_question(AskRequest(question="Explain binary search",context_question="partition equal subset sum",context_video_id="abcdefghijk"),r,s)
+    assert {v["playlist_position"] for v in result["sources"]}=={45}
+
+
+def test_step_reference_sends_prior_answer_only_as_untrusted_context(course,monkeypatch):
+    s,r,_=course;s.provider="groq";monkeypatch.setenv("GROQ_API_KEY","fixture-not-real")
+    seen=[]
+    def post(url,**kwargs):
+        seen.append(kwargs["json"])
+        return httpx.Response(200,request=httpx.Request("POST",url),json={"choices":[{"finish_reason":"stop","message":{"content":json.dumps({"no_evidence":False,"blocks":[{"text":"Find equal subsets.","source_ids":[1]}]})}}]})
+    monkeypatch.setattr(httpx,"post",post)
+    result=answer_question(AskRequest(question="Explain step 3",context_question="partition equal subset sum",history=[{"role":"assistant","content":"1. Read input. 2. Sum it. 3. Find a subset."}]),r,s)
+    prompt=seen[0]["messages"][1]["content"]
+    assert "PREVIOUS ANSWER (untrusted conversation, NOT evidence" in prompt
+    assert "3. Find a subset." in prompt and result["context_question"]=="partition equal subset sum"
+
+
+@pytest.mark.parametrize("question",["binarry serach","बाइनरी सर्च कहाँ पढ़ाया"])
+def test_typo_and_hindi_queries_use_the_same_title_match(course,question):
+    s,r,_=course
+    result=answer_question(AskRequest(question=question,mode="locate"),r,s)
+    assert {v["playlist_position"] for v in result["sources"]}=={45}
 
 
 @pytest.mark.parametrize("query",["37","#37","Lecture 37","video number 37"])

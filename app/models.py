@@ -56,6 +56,7 @@ class AskRequest(BaseModel):
     code_language: Literal["Python", "C++", "Java"] = "Python"
     revision_detail: Literal["quick", "detailed"] = "detailed"
     context_question: str | None = Field(default=None, max_length=1200)
+    context_video_id: str | None = Field(default=None, pattern=r"^[A-Za-z0-9_-]{11}$")
     history: list[HistoryTurn] = Field(default_factory=list, max_length=6)
 
     @field_validator("question")

@@ -7,7 +7,7 @@ const storage = {
 };
 let saved;
 try { const raw = JSON.parse(storage.get('localStorage', 'a2z-saved', '[]')); saved = new Set(Array.isArray(raw) ? raw.filter(v => typeof v === 'string') : []); } catch { saved = new Set(); }
-const state = { stats:null, library:[], history:[], filter:null, busy:false, controller:null, generation:0, savedOnly:false, evidence:null, evidenceTab:'sources', key:storage.get('sessionStorage', 'a2z-access-key'), contextQuestion:'', sessionId:'', sessionTitle:'', remember:false, sessions:[], progress:{}, lastLecture:null, pauseHistorySave:false, profile:{name:'',goal:''} };
+const state = { stats:null, library:[], history:[], filter:null, busy:false, controller:null, generation:0, savedOnly:false, evidence:null, evidenceTab:'sources', key:storage.get('sessionStorage', 'a2z-access-key'), contextQuestion:'', contextVideo:null, sessionId:'', sessionTitle:'', remember:false, sessions:[], progress:{}, lastLecture:null, pauseHistorySave:false, profile:{name:'',goal:''} };
 function node(tag, cls, text) { const n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = text; return n; }
 function icon(name) { const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.setAttribute('class', 'icon'); svg.setAttribute('aria-hidden', 'true'); const use = document.createElementNS(svg.namespaceURI, 'use'); use.setAttribute('href', '#i-' + name); svg.append(use); return svg; }
 function toast(text) { $('toast').textContent = text; $('toast').hidden = false; clearTimeout(toast.timer); toast.timer = setTimeout(() => $('toast').hidden = true, 4500); }
@@ -83,7 +83,7 @@ function cleanTurn(turn) {
   const data=turn.data || turn;
   const sources=Array.isArray(data.sources) ? data.sources.filter(s=>s && Number.isInteger(s.number) && s.number>0 && typeof s.title==='string' && typeof s.text==='string').slice(0,10) : [];
   const locations=Array.isArray(data.locations) ? data.locations.filter(v=>v && validVideo(v.video_id) && typeof v.title==='string').slice(0,10) : [];
-  result.data={answer:result.content,mode:['generated','evidence','catalog','refusal'].includes(data.mode) ? data.mode : 'evidence',sources,locations,warning:typeof data.warning==='string' ? data.warning : null,summary_type:data.summary_type,requested_mode:data.requested_mode,revision_detail:data.revision_detail,context_question:typeof data.context_question==='string' ? data.context_question.slice(0,1200) : ''};
+  result.data={answer:result.content,mode:['generated','evidence','catalog','refusal'].includes(data.mode) ? data.mode : 'evidence',sources,locations,warning:typeof data.warning==='string' ? data.warning : null,summary_type:data.summary_type,requested_mode:data.requested_mode,revision_detail:data.revision_detail,language:data.language,cache_hit:data.cache_hit===true,context_question:typeof data.context_question==='string' ? data.context_question.slice(0,1200) : ''};
   result.sources=sources;result.locations=locations;
  }
  return result;
@@ -92,7 +92,7 @@ function persistConversation() {
  if (!state.remember || state.pauseHistorySave || !state.history.length) return;
  let turns=state.history.slice(-40).map(cleanTurn).filter(Boolean); while(turns[0]?.role==='assistant')turns.shift();
  if (!turns.length) return;
- const session={id:state.sessionId,title:state.sessionTitle || turns.find(t=>t.role==='user')?.content.slice(0,90) || 'Study conversation',updated:Date.now(),turns,contextQuestion:state.contextQuestion,filter:state.filter,mode:$('mode').value,language:$('language').value,codeLanguage:$('code-language').value,revisionDetail:$('revision-detail').value};
+ const session={id:state.sessionId,title:state.sessionTitle || turns.find(t=>t.role==='user')?.content.slice(0,90) || 'Study conversation',updated:Date.now(),turns,contextQuestion:state.contextQuestion,contextVideo:state.contextVideo,filter:state.filter,mode:$('mode').value,language:$('language').value,codeLanguage:$('code-language').value,revisionDetail:$('revision-detail').value};
  let sessions=[session,...state.sessions.filter(s=>s.id!==session.id)].slice(0,8);
  while(sessions.length>1 && JSON.stringify(sessions).length>1200000)sessions.pop();
  state.sessions=sessions;
@@ -111,7 +111,7 @@ function renderHistory() {
 }
 function restoreConversation(session) {
  state.generation++;state.controller?.abort();state.controller=null;setBusy(false);closePlayer();
- state.pauseHistorySave=false;state.sessionId=session.id;state.sessionTitle=session.title;state.contextQuestion=session.contextQuestion || '';
+ state.pauseHistorySave=false;state.sessionId=session.id;state.sessionTitle=session.title;state.contextQuestion=session.contextQuestion || '';state.contextVideo=validVideo(session.contextVideo)?session.contextVideo:null;
  state.history=session.turns.map(cleanTurn).filter(Boolean);$('messages').replaceChildren();$('welcome').hidden=!!state.history.length;
  $('mode').value=['explain','locate','summary','hint','compare','complexity','code'].includes(session.mode) ? session.mode : 'explain';$('language').value=['English','Hindi','Hinglish'].includes(session.language) ? session.language : 'English';$('code-language').value=['Python','C++','Java'].includes(session.codeLanguage) ? session.codeLanguage : 'Python'; updateMode();
  $('revision-detail').value=['quick','detailed'].includes(session.revisionDetail) ? session.revisionDetail : 'detailed';
@@ -137,7 +137,7 @@ function libraryReference(query) {
 }
 function renderLibrary() {
  const root = $('library'); root.replaceChildren();
- const normalize=text=>text.toLowerCase().replace(/dynamic programming/g,'dp').replace(/linkedlist/g,'linked list').replace(/binarysearch/g,'binary search').replace(/dijsktra|djikstra/g,'dijkstra');
+ const normalize=text=>text.toLowerCase().normalize('NFC').replace(/dynamic programming/g,'dp').replace(/linkedlist/g,'linked list').replace(/binarysearch/g,'binary search').replace(/dijsktra|djikstra/g,'dijkstra').replace(/binarry|binay|bianry/g,'binary').replace(/serach/g,'search').replace(/partion|partiton/g,'partition').replace(/knapsak/g,'knapsack').replace(/subsequnce/g,'subsequence').replace(/बाइनरी/g,'binary').replace(/सर्च/g,'search');
  const query=normalize($('library-search').value.trim()),reference=libraryReference(query),terms=query.split(/\s+/).filter(Boolean),view=$('library-view').value;
  const items = state.library.filter(v => { const title = normalize(v.title+' '+(v.playlist_position || '')+' '+(v.lecture_label || '')); const matches=reference ? reference.position ? v.playlist_position===reference.position : (v.lecture_label || '').toLowerCase()===reference.label : terms.every(t=>title.includes(t)); return matches && (view !== 'indexed' || v.kind === 'lecture') && (view !== 'missing' || v.kind === 'catalog') && (!['completed','revise'].includes(view) || state.progress[v.video_id]?.status===view) && (!state.savedOnly || saved.has(v.id)); });
  $('saved-count').textContent = state.library.filter(v => saved.has(v.id)).length; $('library-total').textContent = state.library.filter(v => v.video_id).length;
@@ -153,7 +153,7 @@ function renderLibrary() {
 }
 function setFilter(id, title='') { state.filter=id; $('filter-label').textContent=id ? 'Lecture: '+title : 'Searching across the playlist'; $('clear-filter').hidden=!id; renderLibrary(); }
 function selectLecture(v) {
- state.contextQuestion='Explain '+v.title;rememberLecture(v);
+ state.contextQuestion='Explain '+v.title;state.contextVideo=v.video_id;rememberLecture(v);
  setFilter(v.video_id, v.title); setEvidence({sources:[],locations:[]}); const root=$('selected-lecture'); root.replaceChildren(); root.hidden=false; $('empty-evidence').hidden=true;
  const card=node('article','source-card selection-card'); card.append(node('span','selection-label','SELECTED LECTURE'),node('h3','',v.title),node('small','',(v.playlist_position ? 'Playlist #'+v.playlist_position+' · ' : '')+(v.lecture_label || '')+(v.lecture_label ? ' · ' : '')+time(v.duration)));
  card.append(node('p','',v.indexed ? 'Your next question will search the captions in this lecture.' : 'This lecture is searchable by title. Its captions are pending; no in-video time can be verified yet.'));
@@ -288,12 +288,14 @@ function message(role,text,data) {
   const meta=node('div','message-meta'); meta.append(node('span','',data.mode==='refusal' ? 'No supporting evidence' : data.mode==='catalog' ? 'Playlist title matches' : data.sources.length+' sources · '+(data.mode==='generated' ? revision ? 'Revision notes' : 'Generated explanation' : data.summary_type==='revision_extracts' ? 'Original lecture excerpts' : data.summary_type==='title_overview' ? 'Lecture overview' : 'Extractive revision')));
   const b=node('button',''); b.append(icon('copy'),document.createTextNode(revision ? 'Copy notes' : 'Copy')); b.onclick=()=>copy(revision ? notesMarkdown(text,data) : text,revision ? 'Notes copied with source links.' : 'Answer copied.'); meta.append(b);
   if(revision && data.sources.length){const download=node('button','download-notes','Download notes');download.onclick=()=>downloadMarkdown('a2z-revision-notes.md',notesMarkdown(text,data));meta.append(download);}
+  if(revision && data.sources.length){const keep=node('button','save-notes','Save notes');keep.onclick=()=>saveNote(data);meta.append(keep);}
+  if(data.cache_hit)meta.append(node('span','cache-label','Saved generation · sources unchanged'));
   if (data.sources.length||data.locations?.length) { const view=node('button','','View sources ↗'); view.onclick=()=>{setEvidence(data);openEvidence();}; meta.append(view); } row.append(meta);
   if(data.sources.length && data.mode!=='refusal'){
    const actions=node('div','study-actions');
    for(const [mode,title,q] of (revision ? [['explain','Explain a step','Explain the key steps of this topic with a small example.'],['code','Show code','Show code for this topic.']] : [['summary','Make revision notes','Create revision notes for this topic.'],['complexity','Time & space','Explain the time and space complexity of this topic.']])){
     const action=node('button','study-action',title);action.disabled=state.busy;action.onclick=()=>{if(state.busy)return;const primary=data.sources.find(s=>validVideo(s.video_id));state.contextQuestion=data.context_question || primary?.title || state.contextQuestion;if(primary)setFilter(primary.video_id,primary.title);$('mode').value=mode;updateMode();$('question').value=q;updateQuestion();askQuestion();};actions.append(action);
-   }row.append(actions);
+   }const practice=node('button','study-action','Quiz me');practice.disabled=state.busy;practice.onclick=()=>{if(!state.busy)startPractice(data);};actions.append(practice);row.append(actions);
   }
  }
  $('messages').append(row); scrollConversation(); return row;
@@ -313,15 +315,15 @@ async function askQuestion(event) {
  const history=state.history.slice(-6).map(h=>({role:h.role,content:h.content.slice(0,3000)}));if(!state.sessionTitle)state.sessionTitle=question.slice(0,90); state.history.push({role:'user',content:question}); message('user',question); $('question').value=''; updateQuestion();persistConversation();
  const pending=message('assistant',''); pending.querySelector('.message-body').append(node('span','loading','Finding relevant captions and preparing your answer…')); const timeout=setTimeout(()=>controller.abort('timeout'),65000);
  try {
-  const data=await api('/api/ask',{question,mode:$('mode').value,language:$('language').value,code_language:$('code-language').value,revision_detail:$('revision-detail').value,video_id:state.filter,context_question:state.contextQuestion || null,top_k:6,history},controller.signal);
-  if (generation!==state.generation) return; pending.remove(); message('assistant',data.answer,data); setEvidence(data);state.contextQuestion=data.context_question || state.contextQuestion || question; state.history.push({role:'assistant',content:data.answer,sources:data.sources,locations:data.locations,data});persistConversation();
+  const data=await api('/api/ask',{question,mode:$('mode').value,language:$('language').value,code_language:$('code-language').value,revision_detail:$('revision-detail').value,video_id:state.filter,context_question:state.contextQuestion || null,context_video_id:state.contextVideo,top_k:6,history},controller.signal);
+  if (generation!==state.generation) return; pending.remove(); message('assistant',data.answer,data); setEvidence(data);state.contextQuestion=data.context_question || state.contextQuestion || question;state.contextVideo=data.sources.find(s=>validVideo(s.video_id))?.video_id || data.locations?.find(s=>validVideo(s.video_id))?.video_id || null; state.history.push({role:'assistant',content:data.answer,sources:data.sources,locations:data.locations,data});persistConversation();
  } catch(e) {
   if (generation!==state.generation) return; pending.remove();
   if (controller.signal.aborted) { message('assistant',controller.signal.reason==='timeout' ? 'This request took too long. Please try again.' : 'Response stopped. You can ask another question.'); }
   else { message('assistant',e.message).classList.add('error-message'); toast(e.message); }
  } finally { clearTimeout(timeout); if (generation===state.generation) { setBusy(false); state.controller=null; $('question').focus(); } }
 }
-function reset() { persistConversation();state.generation++; state.controller?.abort(); state.controller=null; setBusy(false); state.history=[];state.contextQuestion='';state.sessionId=newSessionId();state.sessionTitle=''; $('messages').replaceChildren(); $('welcome').hidden=false; setEvidence({sources:[],locations:[]}); setFilter(null); $('question').value=''; updateQuestion();renderContinue(); closeMenu(); closeEvidence(); $('question').focus(); }
+function reset() { persistConversation();state.generation++; state.controller?.abort(); state.controller=null; setBusy(false); state.history=[];state.contextQuestion='';state.contextVideo=null;state.sessionId=newSessionId();state.sessionTitle=''; $('messages').replaceChildren(); $('welcome').hidden=false; setEvidence({sources:[],locations:[]}); setFilter(null); $('question').value=''; updateQuestion();renderContinue(); closeMenu(); closeEvidence(); $('question').focus(); }
 function exportConversation() {
  if (!state.history.length) { toast('Ask a question before exporting.'); return; }
  const text='# A2Z Studyroom conversation\n\n'+state.history.map(h=>'## '+(h.role==='user'?'Question':'Answer')+'\n\n'+h.content+(h.sources?.length ? '\n\nSources:\n'+h.sources.map(s=>'['+s.number+'] '+s.title+(validVideo(s.video_id)?' — '+videoLink(s.video_id,s.seek_seconds):'')).join('\n') : '')+(h.locations?.length ? '\n\nRelated lectures (title matches):\n'+h.locations.map(v=>'#'+v.playlist_position+' '+v.title+(validVideo(v.video_id)?' — '+videoLink(v.video_id):'')).join('\n') : '')).join('\n\n');
@@ -365,4 +367,4 @@ document.addEventListener('keydown',e=>{
  if(e.key==='Escape'){closeMenu();closeEvidence();}
 });
 window.addEventListener('resize',()=>{if(window.innerWidth>760)closeMenu();if(window.innerWidth>1080)closeEvidence();});
-initializeProfile();initializeRevision();updateMode();load();
+initializeProfile();initializeRevision();initializeStudy();updateMode();load();

@@ -1,5 +1,6 @@
 import os
 import re
+import sqlite3
 import time
 import httpx
 from typing import Literal
@@ -8,9 +9,10 @@ from app.config import Settings
 from app.models import AskRequest
 from app.retrieval import Retriever, tokens
 from app.catalog import lecture_label, lecture_reference, load_catalog, locate
-from app.conversation import conversation_topic, resolve_question, topic_terms
+from app.conversation import conversation_topic, resolve_question, topic_terms, is_followup
 from app.verification import answer_issues, illustration_hint
 from app.revision import SECTIONS, labels, revision_prompt, revision_context, caption_excerpt
+from app.note_cache import NoteCache, cache_key
 
 REFUSAL = "I couldn't find enough evidence in the indexed material. Try a more specific DSA question, select another lecture, or index the relevant transcripts."
 INSTRUCTIONS = """You are an independent DSA study assistant. Answer using ONLY the numbered source excerpts.
@@ -248,7 +250,8 @@ def _answer_question(request: AskRequest, retriever: Retriever, settings: Settin
         if selected:
             query = selected["title"] + " " + query
     hits = retriever.search(query, request.top_k, request.video_id)
-    title_query = query if lecture_reference(query) else " ".join(topic_terms(query))
+    topic = conversation_topic(request)
+    title_query = (topic or query) if lecture_reference(topic or query) else " ".join(topic_terms(topic or query))
     locations = locate(title_query,catalog,request.top_k,request.video_id)
     # An exact but missing/out-of-scope lecture number must not fall through to
     # an incidental number or topic mention in another lecture's captions.
@@ -265,7 +268,10 @@ def _answer_question(request: AskRequest, retriever: Retriever, settings: Settin
         for video_id in best:
             target = next(v for v in locations if v["video_id"]==video_id)
             focused_query = target["title"] if lecture_reference(query) else query
-            focused.extend(retriever.search(focused_query, request.top_k, video_id))
+            matches = retriever.search(focused_query, request.top_k, video_id)
+            if not matches and topic and topic != request.question:
+                matches = retriever.search(target["title"], request.top_k, video_id)
+            focused.extend(matches)
         focused.sort(key=lambda h:(h["lexical_coverage"], h["score"]), reverse=True)
         focused = focused[:request.top_k]
         if focused or any(c.kind == "lecture" for c in retriever.chunks):
@@ -295,6 +301,18 @@ def _answer_question(request: AskRequest, retriever: Retriever, settings: Settin
     key = os.getenv("GROQ_API_KEY", "") if settings.provider == "groq" else os.getenv("LLM_API_KEY", "")
     if not key:
         return fallback("The configured language model key is missing. Showing retrieved evidence.")
+    note_cache, note_key = None, None
+    if request.mode == "summary":
+        # Revision prompts use the resolved topic and excerpts, not prior model prose.
+        # Every relevant input, including full passage contents, participates in the key.
+        try:
+            note_cache = NoteCache(settings.data_dir / "revision_cache.sqlite3")
+            note_key = cache_key(request, query, hits, settings)
+            cached = note_cache.get(note_key)
+            if cached:
+                return cached
+        except (OSError, sqlite3.Error):
+            note_cache = None
     base = "https://api.groq.com/openai/v1" if settings.provider == "groq" else os.getenv("LLM_BASE_URL", "").rstrip("/")
     if not base.startswith(("https://", "http://localhost", "http://127.0.0.1")):
         return fallback("Language model URL is not configured correctly.")
@@ -309,8 +327,12 @@ def _answer_question(request: AskRequest, retriever: Retriever, settings: Settin
     if hint and request.mode != "hint":
         prompt += "\nCHECKED ILLUSTRATION (not lecture testimony):\n"+hint
     # Old questions help resolve pronouns, but remain explicitly separate from evidence.
-    if request.history:
+    if request.history and not is_revision:
         prompt += "\nPREVIOUS QUESTIONS (not evidence):\n" + "\n".join(h.content[:600] for h in request.history if h.role == "user")
+        if topic and topic != request.question:
+            previous = next((h.content for h in reversed(request.history) if h.role=="assistant"), "")
+            if previous:
+                prompt += "\nPREVIOUS ANSWER (untrusted conversation, NOT evidence; use only to identify the step the user refers to, and re-check all claims against excerpts):\n" + previous[:2800]
     prompt += "\nCURRENT QUESTION (with the user's topic resolved):\n" + query
     instructions = INSTRUCTIONS + ("\n"+STRUCTURED_INSTRUCTIONS if structured else "")
     if is_revision:
@@ -376,11 +398,19 @@ def _answer_question(request: AskRequest, retriever: Retriever, settings: Settin
     text = "".join(piece if piece.startswith("`") else re.sub(citation_re,
         lambda m:f"[{mapping[int(m[1])]}]", piece) for piece in pieces)
     citations = [source(hits[n-1], i+1, settings) for i,n in enumerate(cited)]
-    return {"answer":text,"sources":citations,"grounded":True,"mode":"generated","retrieved":len(hits),"warning":None,
-            "summary_type":"revision_notes" if is_revision else None}
+    result = {"answer":text,"sources":citations,"grounded":True,"mode":"generated","retrieved":len(hits),"warning":None,
+            "summary_type":"revision_notes" if is_revision else None,"cache_hit":False}
+    if note_cache:
+        try:
+            note_cache.put(note_key, result)
+        except (OSError, sqlite3.Error):
+            pass
+    return result
 
 
 def answer_question(request: AskRequest, retriever: Retriever, settings: Settings):
+    if request.context_video_id and not request.video_id and is_followup(request.question):
+        request=request.model_copy(update={"video_id":request.context_video_id})
     result = _answer_question(request, retriever, settings)
     if "locations" not in result or not result["locations"]:
         cited_videos = {s["video_id"] for s in result["sources"] if s["video_id"]}
@@ -388,6 +418,7 @@ def answer_question(request: AskRequest, retriever: Retriever, settings: Setting
         result["locations"] = [v for v in locate(retrieval_query(request),catalog,3,request.video_id)
                                if v["video_id"] not in cited_videos]
     result["requested_mode"] = request.mode
+    result["language"] = request.language
     if request.mode=="summary":
         result["revision_detail"] = request.revision_detail
     result["context_question"] = conversation_topic(request)

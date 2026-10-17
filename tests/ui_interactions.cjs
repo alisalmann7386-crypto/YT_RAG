@@ -6,6 +6,7 @@ const vm=require('node:vm');
 const {parseHTML}=require('linkedom');
 const html=readFileSync('app/static/index.html','utf8');
 const script=readFileSync('app/static/app.js','utf8');
+const studyScript=readFileSync('app/static/study.js','utf8');
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
 const library=[
  {id:'abcdefghijk',video_id:'abcdefghijk',title:'DP 1. Memoization and Tabulation',playlist_position:1,lecture_label:'DP 1',kind:'lecture',indexed:true,duration:600,chunks:10},
@@ -33,7 +34,7 @@ async function setup(options={}) {
  const context=vm.createContext({window,document,console,AbortController,Blob,URL:TestURL,navigator:{clipboard:{writeText:async text=>{clipboard.push(text);}}},setTimeout:(fn,ms)=>{const t=setTimeout(fn,ms);t.unref();timers.add(t);return t;},clearTimeout,
   fetch:async(path,init)=>{requests.push({path,init});if(path==='/api/stats')return{ok:true,json:async()=>({lectures:1,catalog_lectures:2,unindexed_lectures:1,coverage_percent:50,chunks:10,notes:0,backend:'bm25',llm_provider:'none',corpus:'lecture transcripts'})};if(path==='/api/videos')return{ok:true,json:async()=>({items:options.library || library})};return options.ask?options.ask(path,init):{ok:true,json:async()=>result()};}
  });
- vm.runInContext(script,context); await flush();await flush();
+ vm.runInContext(studyScript,context);vm.runInContext(script,context); await flush();await flush();
  return {window,document,requests,memory,clipboard,downloads,run:code=>vm.runInContext(code,context),dispose:()=>timers.forEach(clearTimeout)};
 }
 test('bootstrap, search, bookmarks and coverage details',async t=>{
@@ -225,4 +226,44 @@ test('a minus sign inside a recall answer remains part of its formula',async t=>
  const p=result();p.answer='- Question: Why does one subset suffice? Answer: the remaining sum is *S - S/2 = S/2*. - Question: What is the base case? Answer: `dp[0] = true`.';
  const a=await setup({ask:async()=>({ok:true,json:async()=>p})});t.after(a.dispose);a.document.getElementById('question').value='partition equal subset sum';await a.run('askQuestion()');
  const items=a.document.querySelectorAll('.message.assistant li');assert.equal(items.length,2);assert.match(items[0].textContent,/S - S\/2 = S\/2/);
+});
+
+function revisionResult(){const p=result();p.mode='generated';p.requested_mode='summary';p.summary_type='revision_notes';p.context_question='binary search';p.revision_detail='quick';p.language='English';p.answer=['Topic & goal','Core idea','Steps & recurrence','Worked example','Time & space complexity','Pitfalls & recall questions'].map((h,i)=>'### '+h+'\n\n'+['Find a target in a sorted array.','Discard the impossible half.','1. Compare the middle.\n2. Update the boundary.','Illustration: search for 3 in [1,3,5].','Time O(log n); space O(1).','Check the loop boundary.'][i]+' [1]').join('\n\n');return p;}
+test('saved notes are independent of chats, searchable, annotated and reloadable',async t=>{
+ const p=revisionResult(),a=await setup({ask:async()=>({ok:true,json:async()=>p})});t.after(a.dispose);const $=id=>a.document.getElementById(id);
+ $('question').value='binary search';$('mode').value='summary';await a.run('askQuestion()');a.document.querySelector('.save-notes').click();assert.equal($('notes-count').textContent,'1');
+ $('new-chat').click();assert.equal(a.run('state.history.length'),0);$('open-notes').click();assert.ok($('notes-dialog').open);assert.match($('note-detail').textContent,/O\(log n\)/);
+ a.document.querySelector('[aria-label="My annotation"]').value='Remember mid + 1. <img src=x>';
+ a.document.querySelector('[aria-label="Note category"]').value='Interview revision';$('note-detail').querySelector('form').dispatchEvent(new a.window.Event('submit',{cancelable:true}));
+ $('notes-search').value='mid + 1';$('notes-search').dispatchEvent(new a.window.Event('input'));assert.equal($('notes-list').querySelectorAll('button').length,1);assert.equal(a.document.querySelector('#note-detail img'),null);
+ const b=await setup({memory:a.memory});t.after(b.dispose);b.document.getElementById('open-notes').click();assert.equal(b.document.getElementById('notes-count').textContent,'1');assert.equal(b.document.querySelector('[aria-label="Note category"]').value,'Interview revision');assert.match(b.document.querySelector('[aria-label="My annotation"]').value,/mid \+ 1/);
+});
+test('duplicate notes are not saved twice and storage denial is explicit',async t=>{
+ const a=await setup({blockedStorage:true});t.after(a.dispose);const p=revisionResult();a.run('saveNote('+JSON.stringify(p)+')');a.run('saveNote('+JSON.stringify(p)+')');assert.equal(a.run('study.notes.length'),1);a.run('saveStudy()');assert.match(a.document.getElementById('toast').textContent,/Kept for this session/);
+});
+test('practice hides answers, requires reveal, schedules ratings and retains progress',async t=>{
+ const a=await setup();t.after(a.dispose);const $=id=>a.document.getElementById(id);await a.run('startPractice('+JSON.stringify(revisionResult())+')');
+ assert.ok($('practice-dialog').open);assert.equal(a.run('study.queue.length'),6);assert.equal($('practice-content').querySelector('.practice-answer').hidden,true);assert.equal($('practice-content').querySelector('.practice-attempt').readOnly,undefined);
+ [...$('practice-content').querySelectorAll('button')].find(b=>b.textContent==='Reveal answer').click();assert.equal($('practice-content').querySelector('.practice-answer').hidden,false);
+ [...$('practice-content').querySelectorAll('button')].find(b=>b.textContent.startsWith('Got it')).click();assert.equal(a.run('study.index'),1);assert.equal(a.run('study.cards[0].reviews'),1);assert.ok(a.run('study.cards[0].due')>Date.now()+86000000);
+ const b=await setup({memory:a.memory});t.after(b.dispose);assert.equal(b.run('study.cards[0].reviews'),1);assert.equal(b.document.getElementById('review-count').textContent,'5');
+});
+test('practice from an explanation requests the correct lecture and handles no evidence',async t=>{
+ const a=await setup({ask:async()=>({ok:true,json:async()=>({cards:[],notes:{sources:[]}})})});t.after(a.dispose);await a.run('startPractice('+JSON.stringify({...result(),context_question:'partition equal subset sum'})+')');
+ const body=JSON.parse(a.requests.find(r=>r.path==='/api/practice').init.body);assert.equal(body.video_id,'abcdefghijk');assert.match(body.question,/partition equal subset sum/);assert.match(a.document.getElementById('practice-status').textContent,/No caption-backed cards/);
+});
+test('study backup merges notes, bookmarks and progress without exporting keys or chats',async t=>{
+ const a=await setup();t.after(a.dispose);a.run('saveNote('+JSON.stringify(revisionResult())+')');a.run('usePracticeCards(cardsFromNotes('+JSON.stringify(revisionResult())+'))');
+ a.document.querySelector('.save-lecture').click();a.document.querySelector('.library-item').click();a.document.querySelector('[data-progress-status=completed]').click();const backup=JSON.parse(JSON.stringify(a.run('studyBackup()')));
+ assert.equal(backup.notes.length,1);assert.equal(backup.cards.length,6);assert.equal(backup.key,undefined);assert.equal(backup.history,undefined);
+ const b=await setup();t.after(b.dispose);b.run('importStudy('+JSON.stringify(backup)+')');b.run('importStudy('+JSON.stringify(backup)+')');assert.equal(b.run('study.notes.length'),1);assert.equal(b.run('study.cards.length'),6);assert.equal(b.document.getElementById('saved-count').textContent,'1');assert.equal(b.document.getElementById('profile-completed').textContent,'1');
+ assert.throws(()=>b.run('importStudy({format:"other",version:1,notes:[],cards:[],bookmarks:[]})'),/backup JSON/);
+ const invalid={...backup,notes:[{id:'bad',data:{answer:'bad',sources:[]}}]};assert.throws(()=>b.run('importStudy('+JSON.stringify(invalid)+')'),/No data was imported/);assert.equal(b.run('study.notes.length'),1);
+});
+test('corrupt stored notes and cards are discarded without breaking the app',async t=>{
+ const a=await setup({stored:{'a2z-notes':'[null,1,{"id":3}]','a2z-practice':'{"cards":[]}'}});t.after(a.dispose);assert.equal(a.document.getElementById('notes-count').textContent,'0');assert.equal(a.document.getElementById('review-count').textContent,'0');assert.equal(a.document.getElementById('stat-indexed').textContent,'1');
+});
+test('follow-up requests carry the matched lecture without pinning the visible library filter',async t=>{
+ const a=await setup();t.after(a.dispose);a.document.getElementById('question').value='binary search';await a.run('askQuestion()');a.document.getElementById('question').value='Explain step 3';await a.run('askQuestion()');
+ const requests=a.requests.filter(r=>r.path==='/api/ask').map(r=>JSON.parse(r.init.body));assert.equal(requests[1].context_video_id,'abcdefghijk');assert.equal(requests[1].video_id,null);a.document.getElementById('new-chat').click();assert.equal(a.run('state.contextVideo'),null);
 });

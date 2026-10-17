@@ -1,6 +1,7 @@
 import math
 import re
 import threading
+import unicodedata
 from collections import Counter, defaultdict
 from functools import lru_cache
 import httpx
@@ -11,19 +12,29 @@ STOP = set("a an the is are was be to of and or for in on with what why how when
 STOP.update("taught teach teaches teaching covered cover lecture lectures video videos playlist striver strivers a2z dsa topic summary summarize summarise revision revise kis konsa kaunsa kaha kahan which find locate learned learn learning short briefly understand".split())
 STOP.update("its their these those same above previous both more again also now then small simple simpler example examples explanation details please provide".split())
 STOP.update("make create prepare good note notes detailed concise recap cheat sheet exam ready study important point key takeaway overview".split())
+STOP.update("kab padhaya padhate padhaya samjha samjhaao kaunse kaunsi milta bataiye बताओ समझाओ पढ़ाया कहाँ कब".split())
+STOP.update("का की के है हैं में किस कौन विषय गया यह इस".split())
 ALIASES = {"dp":"dynamic programming", "bfs":"breadth first search", "dfs":"depth first search",
            "memoisation":"memoization", "tabulate":"tabulation", "bst":"binary search tree",
            "heap":"heap priority queue", "dijkstra":"dijkstra shortest path", "द्विआधारी":"binary",
            "रिकर्शन":"recursion", "रिकर्सन":"recursion", "मेमोइज़ेशन":"memoization",
            "टैबुलेशन":"tabulation", "ग्राफ":"graph", "ऐरे":"array", "हैशिंग":"hashing",
            "kadane's":"kadane", "kadanes":"kadane", "djikstra":"dijkstra", "dijsktra":"dijkstra",
-           "hashmap":"hash map", "hashset":"hash set", "parameterized":"parameterised"}
+           "hashmap":"hash map", "hashset":"hash set", "parameterized":"parameterised",
+           "binarry":"binary", "binay":"binary", "bianry":"binary", "serach":"search",
+           "partion":"partition", "partiton":"partition", "knapsak":"knapsack",
+           "recusrion":"recursion", "recurssion":"recursion", "memozation":"memoization",
+           "subsequnce":"subsequence", "slidingwindow":"sliding window", "twopointer":"two pointer",
+           "barabar":"equal", "बराबर":"equal", "सबसेट":"subset", "योग":"sum",
+           "बाइनरी":"binary", "सर्च":"search"}
 
 
 def tokens(text: str) -> list[str]:
     for digit, word in (("2","two"),("3","three"),("4","four")):
         text = re.sub(rf"\b{digit}\s*sum\b",word+" sum",text,flags=re.I)
-    terms = re.findall(r"[^\W_]+", text.lower(), flags=re.UNICODE)
+    # Keep combining marks with their letters: Hindi vowel signs must not be
+    # split into unrelated tokens by Python's \w character class.
+    terms = "".join(ch if unicodedata.category(ch)[0] in "LNM" else " " for ch in unicodedata.normalize("NFC",text.lower())).split()
     result = []
     for term in terms:
         if term in STOP or len(term) < 2:

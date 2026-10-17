@@ -16,6 +16,7 @@ from app.config import Settings, PLAYLIST_URL
 from app.models import AskRequest
 from app.retrieval import Retriever
 from app.catalog import lecture_label, load_catalog, locate
+from app.practice import practice_cards
 
 
 class RateLimiter:
@@ -136,6 +137,15 @@ def create_app(settings: Settings | None = None):
         except (RuntimeError, httpx.HTTPError) as exc:
             logging.getLogger(__name__).error("Retrieval unavailable: %s", type(exc).__name__)
             raise HTTPException(503, "Retrieval unavailable. Check server configuration and rebuild the index.") from exc
+
+    @app.post("/api/practice", dependencies=[Depends(authorize), Depends(limited)])
+    def practice(payload: AskRequest):
+        try:
+            notes = answer_question(payload.model_copy(update={"mode":"summary"}),retriever,settings)
+            return {"cards":practice_cards(notes,payload.language),"notes":notes,
+                    "grading":"Self-assessment after revealing the cited answer; no automatic score."}
+        except (RuntimeError, httpx.HTTPError) as exc:
+            raise HTTPException(503, "Practice unavailable. Please retry after checking retrieval configuration.") from exc
 
     static = Path(__file__).parent / "static"
     app.mount("/static", StaticFiles(directory=static), name="static")

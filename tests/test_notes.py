@@ -8,6 +8,8 @@ from app.models import AskRequest, Chunk
 from app.retrieval import Retriever
 from app.revision import SECTIONS, labels, overlap, revision_context
 from app.store import build_database
+from app.practice import practice_cards
+from app.note_cache import NoteCache
 
 
 @pytest.fixture
@@ -60,6 +62,82 @@ def test_revision_retrieves_distinct_method_example_and_complexity_sections(lect
     assert not any(overlap(a["chunk"],b["chunk"]) for i,a in enumerate(hits) for b in hits[i+1:])
     single=revision_context(AskRequest(question="binary search",mode="summary",top_k=1),hits,r)
     assert len(single)==1
+
+
+def test_validated_notes_cache_reuses_only_matching_inputs(lecture,monkeypatch):
+    s,r=lecture;calls=provider(monkeypatch,s,[draft()])
+    req=AskRequest(question="binary search",mode="summary")
+    first=answer_question(req,r,s);second=answer_question(req,r,s)
+    assert len(calls)==1 and not first["cache_hit"] and second["cache_hit"]
+    assert first["sources"]==second["sources"]
+    answer_question(req.model_copy(update={"language":"Hindi"}),r,s)
+    answer_question(req.model_copy(update={"revision_detail":"quick"}),r,s)
+    assert len(calls)==3
+    r.chunks[0].text+=" New caption evidence."
+    answer_question(req,r,s)
+    assert len(calls)==4
+
+
+def test_fallback_and_invalid_drafts_are_never_cached(lecture,monkeypatch):
+    s,r=lecture;calls=provider(monkeypatch,s,[{"no_evidence":False,"blocks":[]}])
+    req=AskRequest(question="binary search",mode="summary")
+    for _ in range(2):
+        result=answer_question(req,r,s)
+        assert result["mode"]=="evidence"
+    assert len(calls)==4
+    assert NoteCache(s.data_dir/"revision_cache.sqlite3").get("missing") is None
+
+
+def test_cache_is_bounded_expiring_and_handles_corrupt_json(tmp_path):
+    import sqlite3
+    cache=NoteCache(tmp_path/"cache.sqlite3",limit=2)
+    result={"mode":"generated","summary_type":"revision_notes","sources":[{"number":1}]}
+    for key in ("a","b","c"):cache.put(key,result)
+    assert cache.get("a") is None and cache.get("c")["cache_hit"]
+    with sqlite3.connect(cache.path) as db:
+        db.execute("UPDATE notes SET body='broken' WHERE key='b'")
+        db.execute("UPDATE notes SET created=0 WHERE key='c'")
+    assert cache.get("b") is None and cache.get("c") is None
+
+
+def test_practice_cards_hide_no_sources_and_reuse_validated_sections(lecture,monkeypatch):
+    s,r=lecture;provider(monkeypatch,s,[draft()])
+    result=answer_question(AskRequest(question="binary search",mode="summary"),r,s)
+    cards=practice_cards(result)
+    assert len(cards)==6 and len({c["id"] for c in cards})==6
+    assert "recurrence" in cards[2]["question"] and "O(log n)" in cards[4]["answer"]
+    assert all(c["sources"] and c["basis"]=="generated notes" for c in cards)
+    assert cards==practice_cards(result)
+    assert practice_cards({"sources":[],"answer":"Title only"})==[]
+
+
+def test_practice_without_model_is_explicitly_caption_based(lecture):
+    s,r=lecture
+    result=answer_question(AskRequest(question="binary search",mode="summary"),r,s)
+    cards=practice_cards(result)
+    assert cards and all(c["basis"]=="original caption excerpt" for c in cards)
+    assert all(c["sources"][0]["text"] in c["answer"] for c in cards)
+
+
+def test_practice_api_returns_cards_and_no_cards_for_missing_captions(lecture,monkeypatch):
+    from fastapi.testclient import TestClient
+    from app.main import create_app
+    s,r=lecture;provider(monkeypatch,s,[draft()])
+    with TestClient(create_app(s)) as client:
+        response=client.post("/api/practice",json={"question":"binary search"})
+        assert response.status_code==200 and len(response.json()["cards"])==6
+        assert "Self-assessment" in response.json()["grading"]
+        missing=client.post("/api/practice",json={"question":"Lecture 113"}).json()
+        assert missing["cards"]==[] and missing["notes"]["mode"]=="catalog"
+
+
+def test_practice_api_respects_server_authentication(lecture):
+    from fastapi.testclient import TestClient
+    from app.main import create_app
+    s,_=lecture;s.app_key="fixture-private-key"
+    with TestClient(create_app(s)) as client:
+        assert client.post("/api/practice",json={"question":"binary search"}).status_code==401
+        assert client.post("/api/practice",json={"question":"binary search"},headers={"X-API-Key":s.app_key}).status_code==200
 
 
 @pytest.mark.parametrize("question",["Create good revision notes for binary search","Prepare exam-ready notes on binary search","Make a cheat sheet for binary search"])

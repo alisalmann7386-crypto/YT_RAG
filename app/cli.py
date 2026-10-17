@@ -90,22 +90,36 @@ def build_index(settings: Settings, demo=False, semantic=False, qdrant=False):
     return metadata
 
 
-def evaluate(settings, path):
+def evaluate(settings, path, pipeline=False):
+    from dataclasses import replace
+    from app.answer import answer_question
+    from app.models import AskRequest
+    settings=replace(settings,provider="none")  # Evaluations never make paid generation calls.
     retriever = Retriever(settings)
     examples = json.loads(path.read_text(encoding="utf-8"))
     results = []
     for row in examples:
-        hits = retriever.search(row["question"], settings.top_k)
+        request=row.get("request",{"question":row.get("question","")})
+        if pipeline or "request" in row:
+            result=answer_question(AskRequest(**request),retriever,settings)
+            hits=[{"chunk":next(c for c in retriever.chunks if c.id==s["id"])} for s in result["sources"]]
+        else:
+            result={}
+            hits = retriever.search(request["question"], settings.top_k)
         if row.get("expect_refusal"):
-            passed = not hits
+            passed = not hits and not result.get("locations")
+        elif row.get("expect_position"):
+            passed = bool(hits and hits[0]["chunk"].playlist_position==row["expect_position"])
+        elif row.get("expect_catalog_position"):
+            passed = not hits and any(v["playlist_position"]==row["expect_catalog_position"] for v in result.get("locations",[]))
         elif row.get("expect_video_id"):
             expected, tolerance = row.get("expect_second"), row.get("tolerance",30)
             passed = any(h["chunk"].video_id == row["expect_video_id"] and
                 (expected is None or h["chunk"].start <= expected+tolerance and h["chunk"].end >= expected-tolerance) for h in hits)
         else:
             passed = any(row.get("expect_title", "").lower() in h["chunk"].title.lower() for h in hits)
-        results.append({"question":row["question"],"passed":passed,"hits":len(hits)})
-    summary = {"passed":sum(r["passed"] for r in results),"total":len(results),"results":results}
+        results.append({"question":request["question"],"passed":passed,"hits":len(hits),"top_position":hits[0]["chunk"].playlist_position if hits else None})
+    summary = {"backend":settings.backend,"pipeline":pipeline,"passed":sum(r["passed"] for r in results),"total":len(results),"results":results}
     atomic_json(settings.data_dir / "eval_report.json",summary)
     print(json.dumps(summary,indent=2))
     return summary["passed"] == summary["total"] and summary["total"] > 0
@@ -200,6 +214,7 @@ def main(argv=None):
     sub.add_parser("preflight",help="Check local dependencies and configuration without paid calls")
     ev = sub.add_parser("eval")
     ev.add_argument("--file",type=Path,default=Path("data/eval.json"))
+    ev.add_argument("--pipeline",action="store_true",help="Evaluate the complete retrieval/title/follow-up flow without model calls")
     args = parser.parse_args(argv)
     settings = Settings()
     try:
@@ -242,7 +257,7 @@ def main(argv=None):
                              {"coverage":{k:v for k,v in metadata.get("coverage",{}).items() if k != "missing_video_ids"},
                               "lectures":len({c.video_id for c in chunks if c.video_id})},indent=2))
         elif args.command == "eval":
-            return 0 if evaluate(settings,args.file) else 1
+            return 0 if evaluate(settings,args.file,args.pipeline) else 1
         elif args.command == "preflight":
             required = ["fastapi","uvicorn","httpx"] + (["sentence_transformers","numpy"] if settings.backend=="hybrid" else [])
             info = {"dependencies":{m:bool(importlib.util.find_spec(m)) for m in required},
