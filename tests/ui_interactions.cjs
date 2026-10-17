@@ -221,3 +221,8 @@ test('inline numbered steps and recall bullets render as separate list items',as
  const a=await setup({ask:async()=>({ok:true,json:async()=>p})});t.after(a.dispose);a.document.getElementById('question').value='binary search';await a.run('askQuestion()');
  assert.equal(a.document.querySelectorAll('.message.assistant ol li').length,3);assert.equal(a.document.querySelectorAll('.message.assistant ul li').length,2);
 });
+test('a minus sign inside a recall answer remains part of its formula',async t=>{
+ const p=result();p.answer='- Question: Why does one subset suffice? Answer: the remaining sum is *S - S/2 = S/2*. - Question: What is the base case? Answer: `dp[0] = true`.';
+ const a=await setup({ask:async()=>({ok:true,json:async()=>p})});t.after(a.dispose);a.document.getElementById('question').value='partition equal subset sum';await a.run('askQuestion()');
+ const items=a.document.querySelectorAll('.message.assistant li');assert.equal(items.length,2);assert.match(items[0].textContent,/S - S\/2 = S\/2/);
+});

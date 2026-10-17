@@ -246,7 +246,7 @@ function renderText(root,text,data) {
   if(!paragraph.trim())continue;
   let formatted=paragraph.trim();
   if(/^\d+[.)]\s+/.test(formatted))formatted=formatted.replace(/\s+(?=\d+[.)]\s+(?:[A-Z*]))/g,'\n');
-  if(/^[-*]\s+/.test(formatted))formatted=formatted.replace(/\s+(?=-\s+(?:[A-Z*]))/g,'\n');
+  if(/^[-*]\s+/.test(formatted))formatted=formatted.replace(/\s+(?=-\s+(?:\*\*[^*\n]{1,50}\*\*\s*:|(?:Question|Answer|Caution|Pitfall|Tip|Remember|Invariant|Termination)\b))/gi,'\n');
   const lines=formatted.split('\n');
   if(data && lines.length>=2 && /^\s*\|?\s*:?-{3,}/.test(lines[1])) {
    const wrap=node('div','answer-table'),table=node('table'),head=node('thead'),body=node('tbody');
