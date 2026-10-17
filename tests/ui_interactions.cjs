@@ -189,3 +189,30 @@ test('continue studying restores the last opened playback timestamp',async t=>{
  const b=await setup({memory:a.memory});t.after(b.dispose);b.document.getElementById('continue-button').click();
  assert.match(b.document.getElementById('player').src,/start=116/);assert.equal(b.run('state.lastLecture.seconds'),116);
 });
+test('revision notes have detail controls, independent copy/download and restorable formatting',async t=>{
+ const payload=result('Binary Search');Object.assign(payload,{requested_mode:'summary',revision_detail:'quick',mode:'generated',summary_type:'revision_notes',context_question:'binary search',answer:'### Core idea\n\nHalve the sorted search interval. [1]\n\n### Steps\n1. Compare the middle.\n2. Update the boundary. [1]'});
+ const a=await setup({stored:{'a2z-history-enabled':'true'},ask:async()=>({ok:true,json:async()=>payload})});t.after(a.dispose);const $=id=>a.document.getElementById(id);
+ $('mode').value='summary';$('mode').dispatchEvent(new a.window.Event('change'));$('revision-detail').value='quick';assert.equal($('revision-label').hidden,false);
+ $('question').value='binary search';await a.run('askQuestion()');const body=JSON.parse(a.requests.find(r=>r.path==='/api/ask').init.body);assert.equal(body.revision_detail,'quick');
+ assert.equal(a.document.querySelectorAll('.revision-message h3').length,2);assert.equal(a.document.querySelectorAll('.revision-message li').length,2);
+ const copy=[...a.document.querySelectorAll('.message-meta button')].find(b=>b.textContent==='Copy notes');copy.click();await flush();assert.match(a.clipboard.at(-1),/Lecture references/);assert.match(a.clipboard.at(-1),/https:\/\/www.youtube.com\/watch/);
+ a.document.querySelector('.download-notes').click();assert.equal(a.downloads.length,1);assert.match(await a.downloads[0].text(),/Core idea/);
+ const b=await setup({memory:a.memory});t.after(b.dispose);assert.equal(b.document.getElementById('revision-detail').value,'quick');assert.equal(b.document.querySelectorAll('.revision-message h3').length,2);assert.equal(b.document.querySelector('.revision-badge').textContent,'CONCISE REVISION NOTES');
+});
+test('study actions on an older answer retain that answer topic and lecture',async t=>{
+ let n=0;const a=await setup({ask:async()=>{const p=result(++n===1?'Binary Search':'Memoization');p.context_question=n===1?'binary search':'memoization';return{ok:true,json:async()=>p};}});t.after(a.dispose);const $=id=>a.document.getElementById(id);
+ $('question').value='binary search';await a.run('askQuestion()');$('question').value='memoization';await a.run('askQuestion()');
+ a.document.querySelector('.study-action').click();await flush();await flush();const body=JSON.parse(a.requests.filter(r=>r.path==='/api/ask').at(-1).init.body);
+ assert.equal(body.mode,'summary');assert.equal(body.context_question,'binary search');assert.equal(body.video_id,'abcdefghijk');
+});
+test('S avatar opens an editable profile and shows real local progress',async t=>{
+ const a=await setup();t.after(a.dispose);const $=id=>a.document.getElementById(id);
+ $('open-profile').click();assert.ok($('profile-dialog').open);$('learner-name').value='Salman Ali';$('learner-goal').value='Revise DP this week';$('profile-form').dispatchEvent(new a.window.Event('submit',{cancelable:true}));assert.equal($('profile-dialog').open,false);assert.equal($('profile-avatar').textContent,'SA');
+ $('library').querySelector('.save-lecture').click();$('library').querySelector('.library-item').click();$('selected-lecture').querySelector('[data-progress-status=completed]').click();$('open-profile').click();
+ assert.equal($('profile-completed').textContent,'1');assert.equal($('profile-saved').textContent,'1');assert.equal($('profile-progress-label').textContent,'1 of 2 lectures completed');
+ const b=await setup({memory:a.memory});t.after(b.dispose);assert.equal(b.document.getElementById('profile-avatar').textContent,'SA');assert.equal(b.document.getElementById('profile-goal-display').textContent,'Revise DP this week');
+});
+test('profile rendering handles invalid storage and treats the name as text',async t=>{
+ const a=await setup({stored:{'a2z-profile':JSON.stringify({name:'<img src=x>',goal:7})}});t.after(a.dispose);assert.equal(a.document.querySelector('#profile-name-label img'),null);assert.equal(a.document.getElementById('profile-goal-display').textContent,'Set a study goal for your next revision.');
+ const b=await setup({blockedStorage:true});t.after(b.dispose);b.document.getElementById('open-profile').click();b.document.getElementById('learner-name').value='Learner';b.document.getElementById('profile-form').dispatchEvent(new b.window.Event('submit',{cancelable:true}));assert.match(b.document.getElementById('toast').textContent,/this session/);
+});

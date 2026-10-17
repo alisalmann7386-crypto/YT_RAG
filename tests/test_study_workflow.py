@@ -111,6 +111,9 @@ def test_study_modes_send_relevant_evidence_and_requested_controls(course,monkey
         text="Hint: halve the sorted search range." if mode=="hint" else "Binary search halves the range. Time complexity is log n; auxiliary space is constant for the iterative version."
         if mode=="code":text="Implementation derived from the lecture.\n```cpp\nint middle = left + (right-left)/2;\n```\nTime complexity is log n."
         body={"no_evidence":False,"blocks":[{"text":text,"source_ids":[1]}]}
+        if mode=="summary":
+            from app.revision import SECTIONS
+            body["blocks"]=[{"section":section,"text":text,"source_ids":[1]} for section in SECTIONS]
         return httpx.Response(200,request=httpx.Request("POST",url),json={"choices":[{"finish_reason":"stop","message":{"content":json.dumps(body)}}]})
     monkeypatch.setattr(httpx,"post",post)
     result=answer_question(AskRequest(question="Explain binary search",mode=mode,language=language,code_language="C++"),r,s)

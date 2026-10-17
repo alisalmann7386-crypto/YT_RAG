@@ -25,6 +25,9 @@ A deployable study application for [Striver’s A2Z DSA playlist](https://www.yo
 - Bold lecture/timestamp labels, direct watch links below answers, best-match versus related-source labels, safe Markdown tables and copyable code blocks.
 - Completed/revise-again markers, progress filters and a Continue studying card that reopens the last selected caption timestamp.
 - Optional conversation history: enable **Settings → Remember conversations** to restore questions, answers, citations and mode/language choices on the same device. History is off by default; up to eight conversations (40 turns each) are retained. Clear history in the History dialog. Bookmarks and revision progress are stored locally regardless; there is no cross-device account sync. No API key is stored with chats.
+- Quick Revision creates six sections: topic/goal, intuition, steps/recurrence, a worked illustration, time/space complexity, and implementation cautions plus recall questions with answers. Choose **Concise notes** or **Exam-ready notes**. Notes sample distinct teaching sections from the best matching lecture, including its later complexity discussion, and retain clickable source references. Copy/download a single set of notes as Markdown with lecture links.
+- Use **Make revision notes**, **Time & space**, **Explain a step** or **Show code** below an answer to study that answer's lecture, including older answers. The visible lecture filter shows the selected scope.
+- Click the **S avatar** at the bottom of the library to open your learner profile. Set a display name and study goal, and see completed/revise-again/bookmark counts. The profile is stored in the current browser; it does not create an online account.
 
 Independent application, not affiliated with Striver or takeUforward. References identify retrieved evidence; a syntactically valid citation does not prove every generated claim. Verify important answers against the source.
 
@@ -167,6 +170,8 @@ If `APP_API_KEY` is set, add `X-API-Key` or enter it in UI settings. Default UI/
 For a short follow-up, send the prior user topic as `context_question` (maximum 1,200 characters), or the last six turns as `history`. These fields guide topic resolution only, never count as lecture evidence. Explicitly naming a new topic overrides the previous topic. This lightweight heuristic is not unlimited conversation memory; select a lecture or name the topic again when a follow-up is ambiguous.
 
 Complexity and Code modes now supplement a direct lecture match with its explicit complexity sections where available. Without a model key, every mode remains evidence-only: translations, derived code and generated explanations are not promised. If a model abstains despite matching captions, those passages remain visible with a warning instead of disappearing behind a generic refusal.
+
+Quick Revision accepts `"mode":"summary"` and `"revision_detail":"quick"` or `"detailed"` (the default). For example, ask `Create revision notes for partition equal subset sum`, then `Summarise it` in the same conversation. A configured model produces cited study notes; unavailable or invalid generation returns multiple original lecture excerpts labeled as such. Missing captions remain a title-only result. Details absent from the selected excerpts are explicitly marked as unestablished. The notes do not claim exhaustive lecture coverage.
 
 ## Source layout and checks
 

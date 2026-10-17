@@ -5,6 +5,7 @@ from app.retrieval import tokens
 from app.catalog import lecture_reference
 
 FOLLOWUP_WORDS = set("its their these those same above previous both more another again also now then next small simple simpler example examples explanation detail details solution approach approaches implementation implement write show convert translate language python java cpp english hindi hinglish time space complexity auxiliary memory cost optimize optimise optimized optimised optimal optimization optimisation efficient efficiency pseudocode recurrence hint hints please give provide briefly discuss discussion tell taught covered number no about".split())
+FOLLOWUP_WORDS.update("make create prepare good note notes detailed concise recap cheat sheet exam ready study important point key takeaway overview summarise summarize summary revision".split())
 
 
 def topic_terms(question: str) -> list[str]:

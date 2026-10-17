@@ -116,3 +116,23 @@ dialog .muted{font-size:11px;color:#a5b5cb}
  .message-body .result-heading{font-size:14px}.composer-note{font-size:9px}
 }
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+
+/* Revision notes share the existing workspace and remain readable on narrow screens. */
+.revision-message .message-body{counter-reset:note-section;border:1px solid #344b42;border-radius:12px;padding:19px 21px;background:linear-gradient(135deg,#15251d66,#121a26)}
+.revision-badge{display:inline-flex;border:1px solid #49664f;border-radius:5px;padding:4px 8px;margin-bottom:5px;color:#bff5cd;font-size:10px;font-weight:700;letter-spacing:.8px}
+.revision-message .message-body h3{border-top:1px solid #334438;padding-top:17px;margin-top:22px;color:#d5f5df;display:flex;gap:9px;align-items:baseline}
+.revision-message .message-body h3:before{counter-increment:note-section;content:counter(note-section,decimal-leading-zero);font-size:10px;letter-spacing:.6px;color:#92ba9d;flex-shrink:0}
+.revision-message .message-body p,.revision-message .message-body li{line-height:1.85}
+.revision-message .message-body p{margin:10px 0}.revision-message .message-meta{flex-wrap:wrap}
+.study-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:13px}
+.study-action{min-height:36px;padding:7px 11px;border:1px solid #3d4c63;border-radius:7px;background:#192537;color:#cadcf5;font-size:11px;font-weight:600}
+.study-action:hover{background:#23392d;border-color:#7fa48a;color:#d5f8de}.study-action:disabled{opacity:.5}
+.selectors{min-width:0}.selectors label{max-width:100%}.selectors select{width:100%}
+@media(max-width:760px){.revision-message .message-body{padding:15px 14px}.revision-message .message-body h3{font-size:14px}.study-action,.download-notes{min-height:44px;font-size:12px}.revision-message .message-body{overflow-wrap:anywhere}}
+.profile-trigger{display:flex;align-items:center;gap:10px;flex:1;min-width:0;min-height:44px;text-align:left;border:0;background:transparent;border-radius:8px;padding:3px;color:#d4deed}
+.profile-trigger:hover{background:#1c2934}.profile-trigger>span:last-child{min-width:0;overflow-wrap:anywhere}.profile-trigger .mini-avatar{flex-shrink:0}
+.profile-intro{display:flex;gap:14px;align-items:center;margin:20px 0}.profile-intro .mini-avatar{width:52px;height:52px;font-size:19px;flex-shrink:0}.profile-intro strong{font-size:17px;color:#edf5ff}.profile-intro p{font-size:12px;line-height:1.7;margin:5px 0;color:#adbfce;overflow-wrap:anywhere}
+.profile-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:20px 0}.profile-stats>div{display:grid;gap:5px;padding:13px 8px;border:1px solid #344555;border-radius:9px;background:#182532;text-align:center}.profile-stats strong{font-size:23px;color:#bff3cd}.profile-stats span{font-size:11px;color:#b6c7dc}
+.profile-progress{display:grid;gap:9px;font-size:12px;color:#b7cbbf;margin-bottom:24px}.profile-progress progress{width:100%;height:8px;accent-color:var(--accent)}
+#profile-form{display:grid;gap:9px}#profile-form label{font-size:12px;font-weight:600;color:#ccdaed}#profile-form input{width:100%;border:1px solid #3a4a61;background:#141e2d;color:#e6f0ff;border-radius:7px;padding:11px;font-size:14px;margin-bottom:6px}#profile-form .primary-link{justify-self:start;min-height:42px}#profile-form p{margin:4px 0 9px}
+@media(max-width:760px){#profile-form input{font-size:16px}.profile-stats span{font-size:10px}#profile-form .primary-link{min-height:44px}}

@@ -7,7 +7,7 @@ const storage = {
 };
 let saved;
 try { const raw = JSON.parse(storage.get('localStorage', 'a2z-saved', '[]')); saved = new Set(Array.isArray(raw) ? raw.filter(v => typeof v === 'string') : []); } catch { saved = new Set(); }
-const state = { stats:null, library:[], history:[], filter:null, busy:false, controller:null, generation:0, savedOnly:false, evidence:null, evidenceTab:'sources', key:storage.get('sessionStorage', 'a2z-access-key'), contextQuestion:'', sessionId:'', sessionTitle:'', remember:false, sessions:[], progress:{}, lastLecture:null, pauseHistorySave:false };
+const state = { stats:null, library:[], history:[], filter:null, busy:false, controller:null, generation:0, savedOnly:false, evidence:null, evidenceTab:'sources', key:storage.get('sessionStorage', 'a2z-access-key'), contextQuestion:'', sessionId:'', sessionTitle:'', remember:false, sessions:[], progress:{}, lastLecture:null, pauseHistorySave:false, profile:{name:'',goal:''} };
 function node(tag, cls, text) { const n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = text; return n; }
 function icon(name) { const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.setAttribute('class', 'icon'); svg.setAttribute('aria-hidden', 'true'); const use = document.createElementNS(svg.namespaceURI, 'use'); use.setAttribute('href', '#i-' + name); svg.append(use); return svg; }
 function toast(text) { $('toast').textContent = text; $('toast').hidden = false; clearTimeout(toast.timer); toast.timer = setTimeout(() => $('toast').hidden = true, 4500); }
@@ -34,14 +34,26 @@ function toggleSaved(id) {
  if (saved.has(id)) saved.delete(id); else saved.add(id);
  if (!storage.set('localStorage', 'a2z-saved', JSON.stringify([...saved]))) toast('Saved for this session. Browser storage is unavailable.');
  renderLibrary(); document.querySelectorAll('[data-save-id]').forEach(updateSaveButton);
+ renderProfile();
 }
 function setSavedView(value) { state.savedOnly = value; for (const [id, active] of [['tab-all',!value],['tab-saved',value]]) { $(id).classList.toggle('active', active); $(id).setAttribute('aria-pressed', String(active)); } renderLibrary(); }
 function readStored(key,fallback) { try { return JSON.parse(storage.get('localStorage',key,JSON.stringify(fallback))); } catch { return fallback; } }
+function profileInitials(){return state.profile.name.trim().split(/\s+/).filter(Boolean).slice(0,2).map(s=>Array.from(s)[0]).join('').toLocaleUpperCase() || 'S';}
+function renderProfile(){
+ const initials=profileInitials();$('profile-avatar').textContent=initials;$('profile-large-avatar').textContent=initials;
+ const label=$('profile-name-label');label.replaceChildren(document.createTextNode(state.profile.name || 'Your learning space'),node('small','','View your profile and progress'));
+ $('profile-display-name').textContent=state.profile.name || 'DSA learner';$('profile-goal-display').textContent=state.profile.goal || 'Set a study goal for your next revision.';
+ const ids=new Set(state.library.map(v=>v.video_id).filter(validVideo)),completed=[...ids].filter(id=>state.progress[id]?.status==='completed').length,revise=[...ids].filter(id=>state.progress[id]?.status==='revise').length;
+ $('profile-completed').textContent=completed;$('profile-revise').textContent=revise;$('profile-saved').textContent=state.library.filter(v=>saved.has(v.id)).length;
+ $('profile-progress').max=Math.max(1,ids.size);$('profile-progress').value=completed;$('profile-progress-label').textContent=completed+' of '+ids.size+' lectures completed';
+ document.querySelectorAll('.message.user .avatar').forEach(a=>a.textContent=initials);
+}
+function initializeProfile(){const raw=readStored('a2z-profile',{});state.profile={name:typeof raw?.name==='string' ? raw.name.trim().slice(0,60) : '',goal:typeof raw?.goal==='string' ? raw.goal.trim().slice(0,140) : ''};renderProfile();}
 function newSessionId() { return 'chat-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,9); }
 function progressLabel(id) { return {completed:'Completed',revise:'Revise again',learning:'In progress'}[state.progress[id]?.status] || ''; }
 function saveProgress() {
  if (!storage.set('localStorage','a2z-progress',JSON.stringify(state.progress)) || !storage.set('localStorage','a2z-last-lecture',JSON.stringify(state.lastLecture))) toast('Progress kept for this session. Browser storage is unavailable.');
- renderLibrary(); renderContinue();
+ renderLibrary(); renderContinue();renderProfile();
  document.querySelectorAll('[data-progress-id]').forEach(b=>b.setAttribute('aria-pressed',String(state.progress[b.dataset.progressId]?.status===b.dataset.progressStatus)));
 }
 function rememberLecture(v,seconds) {
@@ -71,7 +83,7 @@ function cleanTurn(turn) {
   const data=turn.data || turn;
   const sources=Array.isArray(data.sources) ? data.sources.filter(s=>s && Number.isInteger(s.number) && s.number>0 && typeof s.title==='string' && typeof s.text==='string').slice(0,10) : [];
   const locations=Array.isArray(data.locations) ? data.locations.filter(v=>v && validVideo(v.video_id) && typeof v.title==='string').slice(0,10) : [];
-  result.data={answer:result.content,mode:['generated','evidence','catalog','refusal'].includes(data.mode) ? data.mode : 'evidence',sources,locations,warning:typeof data.warning==='string' ? data.warning : null,summary_type:data.summary_type};
+  result.data={answer:result.content,mode:['generated','evidence','catalog','refusal'].includes(data.mode) ? data.mode : 'evidence',sources,locations,warning:typeof data.warning==='string' ? data.warning : null,summary_type:data.summary_type,requested_mode:data.requested_mode,revision_detail:data.revision_detail,context_question:typeof data.context_question==='string' ? data.context_question.slice(0,1200) : ''};
   result.sources=sources;result.locations=locations;
  }
  return result;
@@ -80,7 +92,7 @@ function persistConversation() {
  if (!state.remember || state.pauseHistorySave || !state.history.length) return;
  let turns=state.history.slice(-40).map(cleanTurn).filter(Boolean); while(turns[0]?.role==='assistant')turns.shift();
  if (!turns.length) return;
- const session={id:state.sessionId,title:state.sessionTitle || turns.find(t=>t.role==='user')?.content.slice(0,90) || 'Study conversation',updated:Date.now(),turns,contextQuestion:state.contextQuestion,filter:state.filter,mode:$('mode').value,language:$('language').value,codeLanguage:$('code-language').value};
+ const session={id:state.sessionId,title:state.sessionTitle || turns.find(t=>t.role==='user')?.content.slice(0,90) || 'Study conversation',updated:Date.now(),turns,contextQuestion:state.contextQuestion,filter:state.filter,mode:$('mode').value,language:$('language').value,codeLanguage:$('code-language').value,revisionDetail:$('revision-detail').value};
  let sessions=[session,...state.sessions.filter(s=>s.id!==session.id)].slice(0,8);
  while(sessions.length>1 && JSON.stringify(sessions).length>1200000)sessions.pop();
  state.sessions=sessions;
@@ -102,6 +114,7 @@ function restoreConversation(session) {
  state.pauseHistorySave=false;state.sessionId=session.id;state.sessionTitle=session.title;state.contextQuestion=session.contextQuestion || '';
  state.history=session.turns.map(cleanTurn).filter(Boolean);$('messages').replaceChildren();$('welcome').hidden=!!state.history.length;
  $('mode').value=['explain','locate','summary','hint','compare','complexity','code'].includes(session.mode) ? session.mode : 'explain';$('language').value=['English','Hindi','Hinglish'].includes(session.language) ? session.language : 'English';$('code-language').value=['Python','C++','Java'].includes(session.codeLanguage) ? session.codeLanguage : 'Python'; updateMode();
+ $('revision-detail').value=['quick','detailed'].includes(session.revisionDetail) ? session.revisionDetail : 'detailed';
  setFilter(validVideo(session.filter) ? session.filter : null,state.library.find(v=>v.video_id===session.filter)?.title || 'Selected lecture');
  for (const turn of state.history) message(turn.role,turn.content,turn.data);
  const last=[...state.history].reverse().find(t=>t.data);setEvidence(last?.data || {sources:[],locations:[]});
@@ -145,7 +158,7 @@ function selectLecture(v) {
  const card=node('article','source-card selection-card'); card.append(node('span','selection-label','SELECTED LECTURE'),node('h3','',v.title),node('small','',(v.playlist_position ? 'Playlist #'+v.playlist_position+' · ' : '')+(v.lecture_label || '')+(v.lecture_label ? ' · ' : '')+time(v.duration)));
  card.append(node('p','',v.indexed ? 'Your next question will search the captions in this lecture.' : 'This lecture is searchable by title. Its captions are pending; no in-video time can be verified yet.'));
  const actions=node('div','selection-actions'); actions.append(external('Watch lecture ↗',videoLink(v.video_id),'primary-link'));
- const ask=node('button','primary-link','Revise this lecture'); ask.onclick=()=>{ $('question').value='Give me a short summary of '+v.title; $('mode').value='summary'; updateMode();updateQuestion(); closeEvidence(); askQuestion(); }; actions.append(ask); card.append(actions,revisionControls(v)); root.append(card); showEvidenceTab('sources'); openEvidence();
+ const ask=node('button','primary-link','Make revision notes'); ask.onclick=()=>{if(state.busy)return; $('question').value='Create revision notes for '+v.title; $('mode').value='summary'; updateMode();updateQuestion(); closeEvidence(); askQuestion(); }; actions.append(ask); card.append(actions,revisionControls(v)); root.append(card); showEvidenceTab('sources'); openEvidence();
  $('question').focus();
 }
 function renderCoverage() {
@@ -165,7 +178,7 @@ async function load() {
   $('coverage-value').textContent=stats.coverage_percent+'%'; $('coverage-fill').style.width=stats.coverage_percent+'%'; $('coverage-caption').textContent=stats.lectures+' of '+stats.catalog_lectures+' lectures';
   $('settings-info').textContent='Library: '+stats.corpus+'. Retrieval: '+stats.backend+'. Explanations: '+(stats.llm_provider === 'none' ? 'source excerpts; generated answers need a server-side model key' : stats.model)+'.';
  } catch(e) { $('connection').textContent='Connection unavailable'; $('connection').classList.add('offline'); $('corpus-banner').textContent=e.message; toast(e.message); }
- finally { $('refresh').disabled=false; }
+ finally { $('refresh').disabled=false;renderProfile(); }
 }
 function openMenu() { $('sidebar').classList.add('open'); $('menu').setAttribute('aria-expanded','true'); $('menu-backdrop').hidden=window.innerWidth>760; closeEvidence(); }
 function closeMenu() { $('sidebar').classList.remove('open'); $('menu').setAttribute('aria-expanded','false'); $('menu-backdrop').hidden=true; }
@@ -241,7 +254,7 @@ function renderText(root,text,data) {
   if(data && lines.every(line=>/^\s*(?:[-*]|\d+[.)])\s+/.test(line))) {
    const list=node(/^\s*\d/.test(lines[0]) ? 'ol' : 'ul');for(const line of lines){const li=node('li');inlineText(li,line.replace(/^\s*(?:[-*]|\d+[.)])\s+/,''),data);list.append(li);}root.append(list);continue;
   }
-  if(data && /^#{1,3}\s+/.test(paragraph)){const heading=node('h3');inlineText(heading,paragraph.replace(/^#{1,3}\s+/,''),data);root.append(heading);continue;}
+  if(data && /^#{1,3}\s+/.test(lines[0])){const heading=node('h3');inlineText(heading,lines[0].replace(/^#{1,3}\s+/,''),data);root.append(heading);if(lines.length>1)renderText(root,lines.slice(1).join('\n'),data);continue;}
   const p=node('p'),lineEnd=paragraph.indexOf('\n'),heading=lineEnd<0 ? paragraph : paragraph.slice(0,lineEnd);
   if ((data?.mode==='evidence' || data?.mode==='catalog') && /^Playlist\s*#\d+\b/.test(heading)) {
    const title=node('strong','result-heading'); inlineText(title,heading,data); p.append(title);
@@ -263,13 +276,22 @@ function answerLectures(data) {
  return root;
 }
 function message(role,text,data) {
- const row=node('article','message '+role); const label=node('div','message-label'); label.append(node('span','avatar',role==='user' ? 'S' : 'a²'),document.createTextNode(role==='user' ? 'YOU' : 'A2Z STUDYROOM')); const body=node('div','message-body'); renderText(body,text,data); row.append(label,body);
+ const revision=data?.requested_mode==='summary',row=node('article','message '+role+(revision ? ' revision-message' : '')); const label=node('div','message-label'); label.append(node('span','avatar',role==='user' ? profileInitials() : 'a²'),document.createTextNode(role==='user' ? 'YOU' : 'A2Z STUDYROOM')); const body=node('div','message-body');
+ if(revision){const badge=node('div','revision-badge',data.mode==='generated' ? (data.revision_detail==='quick' ? 'CONCISE REVISION NOTES' : 'EXAM-READY REVISION NOTES') : data.mode==='catalog' ? 'CAPTIONS PENDING' : data.mode==='refusal' ? 'NO MATCHING EVIDENCE' : 'LECTURE EXCERPTS');body.append(badge);}
+ renderText(body,text,data); row.append(label,body);
  if (data?.warning) row.append(node('div','message-warning',data.warning));
  if (data) {
   const links=answerLectures(data);if(links.childElementCount)row.append(links);
-  const meta=node('div','message-meta'); meta.append(node('span','',data.mode==='refusal' ? 'No supporting evidence' : data.mode==='catalog' ? 'Playlist title matches' : data.sources.length+' sources · '+(data.mode==='generated' ? 'Generated explanation' : data.summary_type==='title_overview' ? 'Lecture overview' : 'Extractive revision')));
-  const b=node('button',''); b.append(icon('copy'),document.createTextNode('Copy')); b.onclick=()=>copy(text,'Answer copied.'); meta.append(b);
+  const meta=node('div','message-meta'); meta.append(node('span','',data.mode==='refusal' ? 'No supporting evidence' : data.mode==='catalog' ? 'Playlist title matches' : data.sources.length+' sources · '+(data.mode==='generated' ? revision ? 'Revision notes' : 'Generated explanation' : data.summary_type==='revision_extracts' ? 'Original lecture excerpts' : data.summary_type==='title_overview' ? 'Lecture overview' : 'Extractive revision')));
+  const b=node('button',''); b.append(icon('copy'),document.createTextNode(revision ? 'Copy notes' : 'Copy')); b.onclick=()=>copy(revision ? notesMarkdown(text,data) : text,revision ? 'Notes copied with source links.' : 'Answer copied.'); meta.append(b);
+  if(revision && data.sources.length){const download=node('button','download-notes','Download notes');download.onclick=()=>downloadMarkdown('a2z-revision-notes.md',notesMarkdown(text,data));meta.append(download);}
   if (data.sources.length||data.locations?.length) { const view=node('button','','View sources ↗'); view.onclick=()=>{setEvidence(data);openEvidence();}; meta.append(view); } row.append(meta);
+  if(data.sources.length && data.mode!=='refusal'){
+   const actions=node('div','study-actions');
+   for(const [mode,title,q] of (revision ? [['explain','Explain a step','Explain the key steps of this topic with a small example.'],['code','Show code','Show code for this topic.']] : [['summary','Make revision notes','Create revision notes for this topic.'],['complexity','Time & space','Explain the time and space complexity of this topic.']])){
+    const action=node('button','study-action',title);action.disabled=state.busy;action.onclick=()=>{if(state.busy)return;const primary=data.sources.find(s=>validVideo(s.video_id));state.contextQuestion=data.context_question || primary?.title || state.contextQuestion;if(primary)setFilter(primary.video_id,primary.title);$('mode').value=mode;updateMode();$('question').value=q;updateQuestion();askQuestion();};actions.append(action);
+   }row.append(actions);
+  }
  }
  $('messages').append(row); scrollConversation(); return row;
 }
@@ -277,17 +299,18 @@ function updateQuestion() { const q=$('question'); $('character-count').textCont
 function updateMode() {
  const mode=$('mode').value;
  $('code-label').hidden=mode!=='code';
- const info={explain:['Explain an idea using the retrieved lecture evidence.','Explain binary search with a small example…'],locate:['Find the lecture and a caption-backed moment to watch.','Where is partition equal subset sum taught?'],summary:['Get a short revision recap of a named topic or selected lecture.','Give me a short revision summary of sliding window…'],hint:['Ask about a specific problem for a hint without the full solution.','Give me a hint for longest substring without repeating characters…'],compare:['Name both approaches you want to compare.','Compare memoization and tabulation…'],complexity:['Ask for time and auxiliary space, with the relevant lecture sources.','What is the time and space complexity of binary search?'],code:['Choose Python, C++ or Java for code derived from the lecture evidence.','Show code for binary search and explain its complexity…']}[mode];
+ $('revision-label').hidden=mode!=='summary';
+ const info={explain:['Explain an idea using the retrieved lecture evidence.','Explain binary search with a small example…'],locate:['Find the lecture and a caption-backed moment to watch.','Where is partition equal subset sum taught?'],summary:['Study notes: goal, intuition, steps, example, complexity and recall questions. Choose concise or exam-ready notes.','Create revision notes for sliding window…'],hint:['Ask about a specific problem for a hint without the full solution.','Give me a hint for longest substring without repeating characters…'],compare:['Name both approaches you want to compare.','Compare memoization and tabulation…'],complexity:['Ask for time and auxiliary space, with the relevant lecture sources.','What is the time and space complexity of binary search?'],code:['Choose Python, C++ or Java for code derived from the lecture evidence.','Show code for binary search and explain its complexity…']}[mode];
  if(info){$('mode-help').textContent=info[0];$('question').placeholder=info[1];}
 }
-function setBusy(value) { state.busy=value; $('send').disabled=value; $('send').hidden=value; $('stop').hidden=!value; $('messages').setAttribute('aria-busy',String(value)); }
+function setBusy(value) { state.busy=value; $('send').disabled=value; $('send').hidden=value; $('stop').hidden=!value; $('messages').setAttribute('aria-busy',String(value));document.querySelectorAll('.study-action').forEach(b=>b.disabled=value); }
 async function askQuestion(event) {
  if (event) event.preventDefault(); const question=$('question').value.trim(); if (!question||state.busy) return;
  const generation=state.generation, controller=new AbortController(); state.controller=controller;state.pauseHistorySave=false; setBusy(true); $('welcome').hidden=true;
  const history=state.history.slice(-6).map(h=>({role:h.role,content:h.content.slice(0,3000)}));if(!state.sessionTitle)state.sessionTitle=question.slice(0,90); state.history.push({role:'user',content:question}); message('user',question); $('question').value=''; updateQuestion();persistConversation();
  const pending=message('assistant',''); pending.querySelector('.message-body').append(node('span','loading','Finding relevant captions and preparing your answer…')); const timeout=setTimeout(()=>controller.abort('timeout'),65000);
  try {
-  const data=await api('/api/ask',{question,mode:$('mode').value,language:$('language').value,code_language:$('code-language').value,video_id:state.filter,context_question:state.contextQuestion || null,top_k:6,history},controller.signal);
+  const data=await api('/api/ask',{question,mode:$('mode').value,language:$('language').value,code_language:$('code-language').value,revision_detail:$('revision-detail').value,video_id:state.filter,context_question:state.contextQuestion || null,top_k:6,history},controller.signal);
   if (generation!==state.generation) return; pending.remove(); message('assistant',data.answer,data); setEvidence(data);state.contextQuestion=data.context_question || state.contextQuestion || question; state.history.push({role:'assistant',content:data.answer,sources:data.sources,locations:data.locations,data});persistConversation();
  } catch(e) {
   if (generation!==state.generation) return; pending.remove();
@@ -299,7 +322,14 @@ function reset() { persistConversation();state.generation++; state.controller?.a
 function exportConversation() {
  if (!state.history.length) { toast('Ask a question before exporting.'); return; }
  const text='# A2Z Studyroom conversation\n\n'+state.history.map(h=>'## '+(h.role==='user'?'Question':'Answer')+'\n\n'+h.content+(h.sources?.length ? '\n\nSources:\n'+h.sources.map(s=>'['+s.number+'] '+s.title+(validVideo(s.video_id)?' — '+videoLink(s.video_id,s.seek_seconds):'')).join('\n') : '')+(h.locations?.length ? '\n\nRelated lectures (title matches):\n'+h.locations.map(v=>'#'+v.playlist_position+' '+v.title+(validVideo(v.video_id)?' — '+videoLink(v.video_id):'')).join('\n') : '')).join('\n\n');
- try { const url=URL.createObjectURL(new Blob([text],{type:'text/markdown;charset=utf-8'})); const a=node('a'); a.href=url; a.download='a2z-conversation.md'; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000); }
+ downloadMarkdown('a2z-conversation.md',text);
+}
+function notesMarkdown(text,data){
+ const sources=(data.sources || []).map(s=>'['+s.number+'] '+s.title+(validVideo(s.video_id) ? ' — '+videoLink(s.video_id,s.seek_seconds) : '')).join('\n');
+ return '# A2Z Studyroom revision notes\n\n'+text+'\n\n## Lecture references\n\n'+sources+(data.warning ? '\n\nNote: '+data.warning : '');
+}
+function downloadMarkdown(filename,text){
+ try { const url=URL.createObjectURL(new Blob([text],{type:'text/markdown;charset=utf-8'})); const a=node('a'); a.href=url; a.download=filename; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000); }
  catch { toast('Download unavailable in this browser. Use Copy beside each answer instead.'); }
 }
 $('question-form').addEventListener('submit',askQuestion);
@@ -321,6 +351,8 @@ $('forget-key').onclick=()=>{state.key='';storage.remove('sessionStorage','a2z-a
 $('download-chat').onclick=exportConversation;
 $('open-history').onclick=()=>{renderHistory();$('history-dialog').showModal();};
 $('history-settings').onclick=()=>{$('history-dialog').close();$('settings-dialog').showModal();};
+$('open-profile').onclick=()=>{renderProfile();$('learner-name').value=state.profile.name;$('learner-goal').value=state.profile.goal;$('profile-dialog').showModal();};
+$('profile-form').onsubmit=e=>{e.preventDefault();state.profile={name:$('learner-name').value.trim().slice(0,60),goal:$('learner-goal').value.trim().slice(0,140)};const stored=storage.set('localStorage','a2z-profile',JSON.stringify(state.profile));renderProfile();$('profile-dialog').close();toast(stored ? 'Profile updated.' : 'Profile updated for this session. Browser storage is unavailable.');};
 $('remember-history').onchange=()=>{state.remember=$('remember-history').checked;storage.set('localStorage','a2z-history-enabled',String(state.remember));if(state.remember)persistConversation();renderHistory();};
 $('clear-history').onclick=()=>{if(!window.confirm('Clear all saved conversations on this device?'))return;state.sessions=[];state.pauseHistorySave=true;storage.remove('localStorage','a2z-conversations');renderHistory();toast('Saved conversations cleared. The open chat stays unsaved until you ask another question.');};
 document.addEventListener('keydown',e=>{
@@ -330,4 +362,4 @@ document.addEventListener('keydown',e=>{
  if(e.key==='Escape'){closeMenu();closeEvidence();}
 });
 window.addEventListener('resize',()=>{if(window.innerWidth>760)closeMenu();if(window.innerWidth>1080)closeEvidence();});
-initializeRevision();updateMode();load();
+initializeProfile();initializeRevision();updateMode();load();

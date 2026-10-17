@@ -10,6 +10,7 @@ from app.store import load_database
 STOP = set("a an the is are was be to of and or for in on with what why how when where who explain please me my i it this that can do does difference between kya hai ka ki ke ko se aur mein me hota hote hoti batao samjhao bhai mujhe bata tell about works work algorithm code python java cpp give show use using versus vs time complexity return returns".split())
 STOP.update("taught teach teaches teaching covered cover lecture lectures video videos playlist striver strivers a2z dsa topic summary summarize summarise revision revise kis konsa kaunsa kaha kahan which find locate learned learn learning short briefly understand".split())
 STOP.update("its their these those same above previous both more again also now then small simple simpler example examples explanation details please provide".split())
+STOP.update("make create prepare good note notes detailed concise recap cheat sheet exam ready study important point key takeaway overview".split())
 ALIASES = {"dp":"dynamic programming", "bfs":"breadth first search", "dfs":"depth first search",
            "memoisation":"memoization", "tabulate":"tabulation", "bst":"binary search tree",
            "heap":"heap priority queue", "dijkstra":"dijkstra shortest path", "द्विआधारी":"binary",

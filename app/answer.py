@@ -2,6 +2,7 @@ import os
 import re
 import time
 import httpx
+from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 from app.config import Settings
 from app.models import AskRequest
@@ -9,6 +10,7 @@ from app.retrieval import Retriever, tokens
 from app.catalog import lecture_label, lecture_reference, load_catalog, locate
 from app.conversation import conversation_topic, resolve_question, topic_terms
 from app.verification import answer_issues, illustration_hint
+from app.revision import SECTIONS, labels, revision_prompt, revision_context, caption_excerpt
 
 REFUSAL = "I couldn't find enough evidence in the indexed material. Try a more specific DSA question, select another lecture, or index the relevant transcripts."
 INSTRUCTIONS = """You are an independent DSA study assistant. Answer using ONLY the numbered source excerpts.
@@ -43,25 +45,44 @@ class GroundedDraft(BaseModel):
     blocks: list[AnswerBlock] = Field(max_length=6)
 
 
-def grounded_response_format(count):
+class RevisionBlock(AnswerBlock):
+    section: Literal["overview", "intuition", "method", "example", "complexity", "recall"]
+
+
+class RevisionDraft(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    no_evidence: bool
+    blocks: list[RevisionBlock] = Field(max_length=6)
+
+
+def grounded_response_format(count, revision=False):
     # Enumerate real excerpt IDs so constrained decoding cannot invent an ID.
-    return {"type":"json_schema", "json_schema":{"name":"grounded_answer", "strict":True,
+    result = {"type":"json_schema", "json_schema":{"name":"revision_notes" if revision else "grounded_answer", "strict":True,
         "schema":{"type":"object", "additionalProperties":False,
             "properties":{"no_evidence":{"type":"boolean"}, "blocks":{"type":"array",
                 "items":{"type":"object", "additionalProperties":False,
                     "properties":{"text":{"type":"string"}, "source_ids":{"type":"array",
                         "items":{"type":"integer", "enum":list(range(1,count+1))}}},
                     "required":["text","source_ids"]}}}, "required":["no_evidence","blocks"]}}}
+    if revision:
+        block = result["json_schema"]["schema"]["properties"]["blocks"]["items"]
+        block["properties"]["section"] = {"type":"string", "enum":list(SECTIONS)}
+        block["required"].append("section")
+    return result
 
 
-def render_grounded_draft(content, count):
-    draft = GroundedDraft.model_validate_json(content)
+def render_grounded_draft(content, count, revision=False, language="English"):
+    draft = (RevisionDraft if revision else GroundedDraft).model_validate_json(content)
     if draft.no_evidence:
         if draft.blocks:
             raise ValueError("Contradictory refusal")
         return "NO_EVIDENCE"
     if not draft.blocks:
         raise ValueError("Empty generated answer")
+    if revision:
+        if len(draft.blocks) != 6 or {b.section for b in draft.blocks} != set(SECTIONS):
+            raise ValueError("Revision notes need six distinct sections")
+        draft.blocks.sort(key=lambda b:SECTIONS.index(b.section))
     parts = []
     for block in draft.blocks:
         if not block.text.strip() or any(n < 1 or n > count for n in block.source_ids):
@@ -70,7 +91,8 @@ def render_grounded_draft(content, count):
         if block.text.count("```") % 2:
             raise ValueError("Incomplete code block")
         refs = " ".join(f"[{n}]" for n in dict.fromkeys(block.source_ids))
-        parts.append(block.text.strip()+ ("\n\n" if "```" in block.text else " ")+refs)
+        heading = "### "+labels(language)[block.section]+"\n\n" if revision else ""
+        parts.append(heading+block.text.strip()+ ("\n\n" if "```" in block.text else " ")+refs)
     return "\n\n".join(parts)
 
 
@@ -156,6 +178,24 @@ def extractive(hits, settings, warning=None, request=None):
             "summary_type":"title_overview" if any(s["summary_type"]=="title_overview" for s in citations) else "extractive"}
 
 
+def revision_evidence(hits, settings, request, warning):
+    """Keep useful passages across the lecture when note generation is unavailable."""
+    selected=hits[:min(request.top_k, 4 if request.revision_detail=="quick" else 6)]
+    citations=[source(h,i+1,settings) for i,h in enumerate(selected)]
+    headings=labels(request.language)
+    first=citations[0]
+    title=(f"Playlist #{first['playlist_position']} · " if first["playlist_position"] else "")+first["title"]
+    parts=["### Lecture excerpts for revision",title,
+           "These are selected source passages. Open the references to read or watch their full context."]
+    for hit,s in zip(selected,citations):
+        section=hit.get("revision_section","overview")
+        text=s["summary"] if s["summary_type"]=="extractive" else caption_excerpt(hit["chunk"],hit.get("query_terms",()),350 if request.revision_detail=="quick" else 650)
+        parts.append(f"### {headings.get(section, headings['overview'])} · {stamp(s['matched_start'])}\n\n{text} [{s['number']}]")
+    return {"answer":"\n\n".join(parts),"sources":citations,"locations":[],"grounded":True,
+            "mode":"evidence","retrieved":len(hits),"summary_type":"revision_extracts",
+            "warning":warning}
+
+
 def complexity_rank(chunk, space=False):
     text=chunk.text
     bounds=len(re.findall(r"\b(?:log(?:arithm\w*)?|big\s+(?:o|of)|constant|target|n\s+(?:into|square|cube))\b|O\s*\(",text,re.I))
@@ -238,22 +278,30 @@ def _answer_question(request: AskRequest, retriever: Retriever, settings: Settin
                     "mode":"catalog","retrieved":0,"warning":"Title matches only. No supporting caption match was found for this question, so an in-video timestamp or lecture summary cannot be verified."}
         return {"answer":REFUSAL,"sources":[],"grounded":False,"mode":"refusal","retrieved":0,"warning":None}
     effective = request.model_copy(update={"question":query})
-    hits=complexity_context(effective,hits,retriever)
-    if request.mode=="complexity" or re.search(r"\bcomplexit(?:y|ies)\b|जटिलता",query,re.I):
+    hits=revision_context(effective,hits,retriever)
+    if request.mode!="summary":
+        hits=complexity_context(effective,hits,retriever)
+    if request.mode!="summary" and (request.mode=="complexity" or re.search(r"\bcomplexit(?:y|ies)\b|जटिलता",query,re.I)):
         space=bool(re.search(r"\b(?:space|memory|auxiliary)\b",query,re.I))
         hits.sort(key=lambda h:complexity_rank(h["chunk"],space),reverse=True)
     if find_lecture:
         return extractive(hits, settings, request=request)
+    def fallback(warning):
+        if request.mode=="summary":
+            return revision_evidence(hits,settings,effective,warning)
+        return extractive(hits,settings,warning,request)
     if settings.provider == "none":
-        return extractive(hits, settings, "Extractive revision: selected source sentences. Generated explanations and translations need a server-side LLM key.", request)
+        return fallback("Showing original source passages. Enable a server-side language model for generated study notes and translations.")
     key = os.getenv("GROQ_API_KEY", "") if settings.provider == "groq" else os.getenv("LLM_API_KEY", "")
     if not key:
-        return extractive(hits, settings, "The configured language model key is missing. Showing retrieved evidence.")
+        return fallback("The configured language model key is missing. Showing retrieved evidence.")
     base = "https://api.groq.com/openai/v1" if settings.provider == "groq" else os.getenv("LLM_BASE_URL", "").rstrip("/")
     if not base.startswith(("https://", "http://localhost", "http://127.0.0.1")):
-        return extractive(hits, settings, "Language model URL is not configured correctly.")
+        return fallback("Language model URL is not configured correctly.")
+    structured = settings.provider == "groq" and settings.llm_model in {"openai/gpt-oss-20b","openai/gpt-oss-120b"}
+    is_revision=request.mode=="summary"
     context = "\n\n".join(f"[{i+1}] {h['chunk'].title} ({h['chunk'].kind}, {h['chunk'].source})\n{h['chunk'].text[:3500]}" for i,h in enumerate(hits))
-    modes = {"explain":"Explain the idea with a small example.","summary":"Give a short revision summary, key idea, and complexity only when supported.","hint":"Give one useful hint only; do not reveal the full solution.",
+    modes = {"explain":"Explain the idea with a small example.","summary":revision_prompt(request.revision_detail,request.language,structured),"hint":"Give one useful hint only; do not reveal the full solution.",
         "compare":"Compare the requested approaches using the sources.","complexity":"Explain time and auxiliary space complexity when supported.",
         "code":f"Give a concise {request.code_language} implementation derived from the sources and explain complexity."}
     prompt = f"Study mode: {modes[request.mode]}\nLanguage: {request.language}\nSOURCE EXCERPTS:\n{context}"
@@ -264,14 +312,16 @@ def _answer_question(request: AskRequest, retriever: Retriever, settings: Settin
     if request.history:
         prompt += "\nPREVIOUS QUESTIONS (not evidence):\n" + "\n".join(h.content[:600] for h in request.history if h.role == "user")
     prompt += "\nCURRENT QUESTION (with the user's topic resolved):\n" + query
-    structured = settings.provider == "groq" and settings.llm_model in {"openai/gpt-oss-20b","openai/gpt-oss-120b"}
     instructions = INSTRUCTIONS + ("\n"+STRUCTURED_INSTRUCTIONS if structured else "")
+    if is_revision:
+        instructions=instructions.replace("Keep the complete answer under 350 words.","Follow the requested revision-note length.")
+        instructions+="\nFor revision notes, follow the six-section contract in the study mode. Each section is one cited block; bullets within that block share its source references."
     payload = {"model":settings.llm_model,"messages":[{"role":"system","content":instructions},{"role":"user","content":prompt}],
-               "temperature":.15,"max_tokens":1600}
+               "temperature":.15,"max_tokens":3200 if is_revision and request.revision_detail=="detailed" else 1600}
     if structured:
         payload.pop("max_tokens")
-        payload.update(response_format=grounded_response_format(len(hits)),
-                       reasoning_effort="low", include_reasoning=False, max_completion_tokens=4096)
+        payload.update(response_format=grounded_response_format(len(hits),is_revision),
+                       reasoning_effort="low", include_reasoning=False, max_completion_tokens=6000 if is_revision else 4096)
     original_messages=payload["messages"]
     deadline=time.monotonic()+50
     for attempt in range(2):
@@ -281,25 +331,32 @@ def _answer_question(request: AskRequest, retriever: Retriever, settings: Settin
             response.raise_for_status()
             choice = response.json()["choices"][0]
             if choice.get("finish_reason") == "length":
-                return extractive(hits, settings, "The model reached its response limit before finishing. Showing retrieved evidence.")
+                return fallback("The model reached its response limit before finishing. Showing retrieved evidence.")
             raw = choice["message"]["content"].strip()
         except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError, AttributeError):
-            return extractive(hits, settings, "Language model unavailable or returned an invalid response. Showing retrieved evidence.")
+            return fallback("Language model unavailable or returned an invalid response. Showing retrieved evidence.")
         text=raw
         issues=[]
         if structured:
             try:
-                text = render_grounded_draft(raw,len(hits))
-            except ValueError:
+                text = render_grounded_draft(raw,len(hits),is_revision,request.language)
+            except ValueError as error:
                 if attempt or time.monotonic() >= deadline-2:
-                    return extractive(hits, settings, "The model returned incomplete or invalid structured sources after one repair attempt. Showing retrieved evidence.")
+                    return fallback("The model returned incomplete or invalid structured sources after one repair attempt. Showing retrieved evidence.")
                 issues=[f"The JSON response failed source-format validation. Return no more than six blocks, each with nonblank text and a nonempty source_ids array of integer excerpt IDs from 1 to {len(hits)}. No string or boolean IDs. Close every fenced code block. For an abstention, return no_evidence=true and blocks=[]; otherwise no_evidence=false with at least one cited block. Do not include inline [N] citations; the application adds them."]
+                if is_revision:
+                    issues.append("For revision notes, return exactly six blocks with these distinct section IDs: "+", ".join(SECTIONS)+". Every section needs cited text, even if it explicitly states a detail is not established.")
+                if hasattr(error,"errors"):
+                    # Diagnostic paths only: never copy source text or credentials into feedback.
+                    issues.append("Invalid fields: "+", ".join(".".join(map(str,e["loc"])) for e in error.errors(include_input=False)[:6]))
         if not issues and text != "NO_EVIDENCE":
             issues=answer_issues(query,text,request.mode)
+            if is_revision and not structured and len(re.findall(r"^#{1,3}\s+",text,re.M))<4:
+                issues.append("Return the six requested revision sections with Markdown headings, useful steps and a worked illustration where supported; a single paragraph is not revision notes.")
         if not issues:
             break
         if attempt or time.monotonic() >= deadline-2:
-            return extractive(hits,settings,"The generated example or requested details did not pass verification. Showing retrieved evidence.")
+            return fallback("The generated example or requested details did not pass verification. Showing retrieved evidence.")
         # One bounded correction; never display a known inconsistent example.
         feedback="Correct these validation failures using the same evidence and output format:\n"+"\n".join(issues)
         feedback += "\nDo not invent missing facts or lecture examples. If complexity is not supported, explicitly say so."
@@ -307,19 +364,20 @@ def _answer_question(request: AskRequest, retriever: Retriever, settings: Settin
         if structured:
             payload["reasoning_effort"]="medium"
     if text == "NO_EVIDENCE":
-        return extractive(hits,settings,"Matching sources were found, but the model could not establish the requested explanation from these passages. Read or watch the evidence below.")
+        return fallback("Matching sources were found, but the model could not establish the requested explanation from these passages. Read or watch the evidence below.")
     # Numerical array indices inside code are not source references.
     prose = re.sub(r"```[\s\S]*?```|`[^`\n]*`", "", text)
     citation_re = r"(?<![\w])\[(\d+)\]"
     cited = list(dict.fromkeys(int(n) for n in re.findall(citation_re, prose)))
     if not cited or any(n < 1 or n > len(hits) for n in cited):
-        return extractive(hits, settings, "Generated answer lacked valid source references. Showing retrieved evidence.")
+        return fallback("Generated answer lacked valid source references. Showing retrieved evidence.")
     mapping = {n:i+1 for i,n in enumerate(cited)}
     pieces = re.split(r"(```[\s\S]*?```|`[^`\n]*`)", text)
     text = "".join(piece if piece.startswith("`") else re.sub(citation_re,
         lambda m:f"[{mapping[int(m[1])]}]", piece) for piece in pieces)
     citations = [source(hits[n-1], i+1, settings) for i,n in enumerate(cited)]
-    return {"answer":text,"sources":citations,"grounded":True,"mode":"generated","retrieved":len(hits),"warning":None}
+    return {"answer":text,"sources":citations,"grounded":True,"mode":"generated","retrieved":len(hits),"warning":None,
+            "summary_type":"revision_notes" if is_revision else None}
 
 
 def answer_question(request: AskRequest, retriever: Retriever, settings: Settings):
@@ -330,6 +388,8 @@ def answer_question(request: AskRequest, retriever: Retriever, settings: Setting
         result["locations"] = [v for v in locate(retrieval_query(request),catalog,3,request.video_id)
                                if v["video_id"] not in cited_videos]
     result["requested_mode"] = request.mode
+    if request.mode=="summary":
+        result["revision_detail"] = request.revision_detail
     result["context_question"] = conversation_topic(request)
     result["resolved_question"] = retrieval_query(request)
     return result

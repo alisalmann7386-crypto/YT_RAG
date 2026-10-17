@@ -45,6 +45,16 @@ Unpunctuated automatic captions are no longer arbitrarily cut at 360 characters 
 
 ## Verification limits
 
+### Quick Revision and learner profile update (17 October)
+
+Quick Revision now selects distinct sections from the primary matched lecture rather than collapsing all windows to one introductory recap. It seeks problem setup, intuition, method, examples and complexity, then fills remaining slots with passages separated in time. Existing retrieval scores are preserved; added windows have a section-match basis. The summary request cannot silently pull in a different lecture after a selected-lecture action.
+
+Generated notes use six named sections with validated source IDs: overview, intuition, method, example, complexity and recall. The Groq schema and application validator require the section field; the application additionally checks all six are present exactly once and renders translated headings. Concise/exam-ready requests carry separate length guidance. The existing two-call correction budget and numerical-example checks still apply. Fallbacks keep several original lecture passages and clearly label them as excerpts; they do not fabricate study notes or unsupported complexity. Single-note copy/download includes lecture links, and saved history retains note formatting and detail choices.
+
+The S avatar is now a keyboard-accessible profile button. Display name and study goal are stored on the device, and progress counts derive from the current lecture library and local revision/bookmark state. Storage denial remains usable in memory. Profile data is not sent with study requests, and no remote login/account service is introduced.
+
+**108 backend tests and 25 DOM interaction tests pass.** New cases cover six-section generation in three languages and both detail levels, diverse same-lecture evidence, missing-caption truthfulness, follow-up note intents, incomplete-note repair, persistent invalid sources, older-answer study actions, note copying/export/restoration, and profile editing/progress/restoration/safe rendering. Model tests use mocked responses; production wording remains model-dependent. Visual and production checks are reported separately from these tests.
+
 ### Groq generation follow-up
 
 The live service returned a citation-validation fallback after Groq was configured. Configuration and successful HTTP responses do not ensure usable source references. GPT-OSS generation now uses Groq's documented strict JSON-schema mode with excerpt IDs enumerated in the schema. The application validates and renders source IDs, rejects incomplete/uncited blocks and out-of-range IDs, preserves explicit refusals and code indices, and ignores reasoning metadata. Low reasoning effort and a 4,096-token completion allowance replace the previous 1,600-token free-form budget for these two supported Groq models. Length-truncated responses receive a distinct fallback warning. Other models keep the existing free-form citation path.
