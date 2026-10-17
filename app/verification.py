@@ -38,6 +38,37 @@ def binary_search_issues(question, prose):
     return errors
 
 
+def partition_trace_issues(original, section):
+    """Check explicit small reachable-sum traces against the displayed input.
+
+    This only handles the simple 'after processing x -> {sums}' format. Keep
+    verification bounded; larger examples should omit unverified state tables.
+    """
+    traces=list(re.finditer(r"\bafter\s+((?:(?:processing|the|final|last)\s+)*)(\d+)\s*(?:→|->|:)\s*("+LIST+")",section,re.I))
+    if not traces:
+        return []
+    if len(original)>40 or sum(original)>10000 or any(n<0 for n in original):
+        return ["Omit the intermediate reachable-sum trace; this example is outside the supported deterministic trace-check limits."]
+    target=sum(original)//2
+    cursor=-1;reachable={0};errors=[]
+    for trace in traces:
+        value=int(trace[2])
+        positions=[i for i in range(cursor+1,len(original)) if original[i]==value]
+        if not positions:
+            errors.append("The DP trace processes an element not present at that point in the input. Remove the trace and show the checked partition instead.")
+            break
+        end=positions[-1] if re.search(r"\b(?:final|last)\b",trace[1],re.I) else positions[0]
+        for number in original[cursor+1:end+1]:
+            reachable |= {s+number for s in reachable if s+number<=target}
+        cursor=end
+        stated=set(values(trace[3]))
+        # Explanatory lists sometimes omit the always-reachable empty sum 0.
+        if stated-{0} != reachable-{0}:
+            expected=", ".join(map(str,sorted(reachable))) if len(reachable)<=25 else "the correctly computed states up to target"
+            errors.append(f"The reachable-sum trace after {value} is incorrect for target {target}. Expected {expected}; sums above the target are not stored by this bounded DP. Correct or omit the intermediate trace and retain the checked partition example.")
+    return errors
+
+
 def answer_issues(question, text, mode="explain"):
     """Check literal partition examples and explicitly requested complexity coverage.
 
@@ -63,6 +94,7 @@ def answer_issues(question, text, mode="explain"):
             continue
         section=prose[array.end():arrays[i+1].start() if i+1<len(arrays) else len(prose)]
         total=sum(original)
+        errors.extend(partition_trace_issues(original,section))
         pattern=r"\btotal(?:\s+sum)?(?:\s+of\s+(?:the\s+)?array)?\s*(?:is|equals|becomes|of|=|:)\s*(\d+(?:\s*\+\s*\d+)*)(?:\s*=\s*(\d+))?"
         for claim in re.finditer(pattern,section,re.I):
             expression=sum(int(n) for n in re.findall(r"\d+",claim[1]))
@@ -97,4 +129,4 @@ def illustration_hint(question):
     return (f"For a numerical illustration, you may use input {original}: total {sum(original)}, "
             "subsets {"+", ".join(map(str,left))+"} and {"+", ".join(map(str,right))+f"}}, each summing to {sum(left)}. "
             "This is an application-checked illustration derived from the partition rule, not a quotation or claim about the lecture's example. "
-            "Preserve every input value and multiplicity. State complexity separately if requested, and only when the excerpts support it.")
+            "Preserve every input value and multiplicity. Prefer explaining the target reduction and checking these two subset sums; do not invent intermediate DP tables or reachable-sum lists. State complexity separately if requested, and only when the excerpts support it.")

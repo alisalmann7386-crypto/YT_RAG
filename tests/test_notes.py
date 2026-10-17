@@ -135,3 +135,17 @@ def test_incorrect_logarithmic_count_is_repaired_before_notes_are_displayed(lect
     assert len(calls)==2 and result["mode"]=="generated"
     assert "exact upper bound" in calls[1]["messages"][-1]["content"]
     assert "at most ⌈log₂ n⌉" not in result["answer"]
+
+
+def test_bad_reachable_sum_trace_is_repaired_in_revision_notes(lecture,monkeypatch):
+    s,r=lecture;bad=draft();good=draft()
+    bad["blocks"][3]["text"]="Illustration: array [1,5,11,5]. After final 5 → {1,5,6,10,11,15,16}. The subsets are {11} and {1,5,5}."
+    good["blocks"][3]["text"]="Illustration: array [1,5,11,5]. The total sum is 22 and the target is 11. The subsets are {11} and {1,5,5}."
+    calls=provider(monkeypatch,s,[bad,good])
+    # Isolate generation verification; lecture/topic ranking has separate tests.
+    hits=r.search("binary search",6,"abcdefghijk")
+    monkeypatch.setattr(r,"search",lambda *a,**k:hits)
+    result=answer_question(AskRequest(question="partition equal subset sum",mode="summary",video_id="abcdefghijk"),r,s)
+    assert len(calls)==2 and result["mode"]=="generated"
+    assert "reachable-sum trace" in calls[1]["messages"][-1]["content"]
+    assert "15,16" not in result["answer"]

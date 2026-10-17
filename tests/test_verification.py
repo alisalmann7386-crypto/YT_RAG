@@ -106,3 +106,18 @@ def test_binary_search_exact_count_is_distinct_from_halvings_or_a_trace():
     assert not binary_search_issues("binary search","The worst case requires at most O(log n) iterations.")
     assert not binary_search_issues("binary search","The worst-case array size 64 requires 7 iterations.")
     assert not binary_search_issues("binary search","Six halvings reduce a range of 64 elements to one.")
+
+
+def test_live_partition_trace_cannot_include_states_beyond_the_target():
+    text="Illustration: array [1,5,11,5]. Total sum is 22. After processing 1 → {1}; after 5 → {1,5,6}; after 11 → {1,5,6,11}; after final 5 → {1,5,6,10,11,15,16}. The subsets are {11} and {1,5,5}."
+    errors=answer_issues("partition equal subset sum",text)
+    assert any("reachable-sum trace" in e and "target 11" in e for e in errors)
+    correct=text.replace("{1,5,6,10,11,15,16}","{1,5,6,10,11}")
+    assert not answer_issues("partition equal subset sum",correct)
+
+
+def test_partition_trace_checks_are_bounded_and_keep_the_input_order():
+    from app.verification import partition_trace_issues
+    assert partition_trace_issues([1,5,11,5],"After processing 7 -> {7}")
+    assert partition_trace_issues([10000000],"After processing 10000000 -> {10000000}")
+    assert not partition_trace_issues([1,5,11,5],"The two subsets are {11} and {1,5,5}.")
